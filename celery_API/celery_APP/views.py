@@ -6,7 +6,7 @@ from rest_framework import status
 
 from . import serializers
 from . import models
-from .tasks import tweeter, tweet_adder
+from .tasks import tweeter, tweet_adder, tweet_scheduler
 
 # -----------------------------------------------------------------------
 # endpoint to change records in outgoing tweet table
@@ -31,17 +31,23 @@ def outbound_tweets(request, pk):
 
             tweet_info = serializer.data
             if tweet_info["approved"] == 1:
-                tweeter.delay(tweet_info["tweet"])
+                print("tweet info inside view: {}".format(tweet_info))
+                tweeter.delay(tweet_info)
+                tweet_scheduler.delay(tweet_info)
 
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # -----------------------------------------------------------------------
-# tweet endpoint to add info
+# endpoint to change config table 
+class ListCreateAppConfig(generics.ListCreateAPIView):
+    queryset = models.AppConfig.objects.all()
+    serializer_class = serializers.AppConfigSerializer
 
+# -----------------------------------------------------------------------
+# tweet endpoint to add info
 class ListCreateTweets(generics.ListCreateAPIView):
     queryset = models.Tweets.objects.all()
     serializer_class = serializers.TweetSerializer
-
 
 # -----------------------------------------------------------------------

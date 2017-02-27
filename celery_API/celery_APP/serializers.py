@@ -5,4 +5,9 @@ class TweetSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Tweets
         fields = '__all__'
-        # exclude = (id,)
+
+
+class AppConfigSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = models.AppConfig
+        fields = '__all__'
