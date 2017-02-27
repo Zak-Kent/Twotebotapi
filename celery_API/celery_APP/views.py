@@ -25,15 +25,10 @@ def outbound_tweets(request, pk):
         return Response(serializer.data)
 
     elif request.method == 'PUT':
+        # needs to have approval and scheduled sending time validated 
         serializer = serializers.TweetSerializer(tweet, data=request.data)
         if serializer.is_valid():
             serializer.save()
-
-            tweet_info = serializer.data
-            if tweet_info["approved"] == 1:
-                print("tweet info inside view: {}".format(tweet_info))
-                tweeter.delay(tweet_info)
-                tweet_scheduler.delay(tweet_info)
 
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
