@@ -9,9 +9,6 @@ from datetime import datetime, timedelta
 
 from .models import Tweets, AppConfig
 
-
-
-
 # callback func used to trigger sending logic task anytime the tweet model saves 
 @receiver(post_save)
 def tweet_model_callback(sender, **kwargs):
@@ -19,7 +16,7 @@ def tweet_model_callback(sender, **kwargs):
     Callback function that gets triggered on a change to object in model.
     Send tweets needing scheduling to tweet_scheduler
     """
-    # grab tweets that need to be scheduled for future with celery 
+    # grab tweets that still need to be scheduled for future with celery 
     tweets = Tweets.objects.filter(approved__exact=1) \
                            .filter(scheduled_time__isnull=True)
 
@@ -51,9 +48,6 @@ def tweet_scheduler(tweet):
 
     return
 
-    
-
-
 @shared_task
 def tweeter(tweet, id):
     """
@@ -73,18 +67,10 @@ def tweet_adder(tweet):
     """
     send or stage tweet depending on value in AppConfig table, save tweet record
     """ 
-    auto_send_flag = AppConfig.objects.latest("id")
-    print("current value of auto send flag: {}".format(auto_send_flag.auto_send))
+    config_obj = AppConfig.objects.latest("id")
+    approved = 1 if config_obj.auto_send else None        
 
-    if auto_send_flag.auto_send:
-        tweeter.delay(tweet)
-        approved = 1    
-    
-    else: 
-        approved = None
-
-    tweet_obj = Tweets(tweet=tweet, approved=approved,
-                        scheduled_time=datetime.datetime.now())
+    tweet_obj = Tweets(tweet=tweet, approved=approved)
     tweet_obj.save()
 
     return
