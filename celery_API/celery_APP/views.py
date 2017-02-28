@@ -45,4 +45,8 @@ class ListCreateTweets(generics.ListCreateAPIView):
     queryset = models.Tweets.objects.all()
     serializer_class = serializers.TweetSerializer
 
+class RetrieveDestroyTweets(generics.RetrieveDestroyAPIView):
+    queryset = models.Tweets.objects.all()
+    serializer_class = serializers.TweetSerializer
+
 # -----------------------------------------------------------------------

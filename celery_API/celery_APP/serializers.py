@@ -4,7 +4,8 @@ from . import models
 class TweetSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Tweets
-        fields = ('id', 'tweet', 'approved', 'time_interval')
+        # fields = ('id', 'tweet', 'approved', 'time_interval')
+        fields = '__all__'
         
 
 

@@ -1,0 +1,162 @@
+[
+{
+    "model": "celery_APP.tweets",
+    "pk": 1,
+    "fields": {
+        "created_date": "2017-02-26T21:12:14.099Z",
+        "modified_date": "2017-02-27T19:29:39.254Z",
+        "tweet": "fake tweet data changed",
+        "approved": null,
+        "time_interval": null,
+        "scheduled_time": null,
+        "sent_time": null
+    }
+},
+{
+    "model": "celery_APP.tweets",
+    "pk": 2,
+    "fields": {
+        "created_date": "2017-02-26T21:26:43.454Z",
+        "modified_date": "2017-02-26T21:26:43.454Z",
+        "tweet": "example tweet",
+        "approved": 1,
+        "time_interval": null,
+        "scheduled_time": "2017-02-26T21:26:43.453Z",
+        "sent_time": null
+    }
+},
+{
+    "model": "celery_APP.tweets",
+    "pk": 3,
+    "fields": {
+        "created_date": "2017-02-26T21:27:56.692Z",
+        "modified_date": "2017-02-26T21:27:56.693Z",
+        "tweet": "example tweet",
+        "approved": 1,
+        "time_interval": null,
+        "scheduled_time": "2017-02-26T21:27:56.692Z",
+        "sent_time": null
+    }
+},
+{
+    "model": "celery_APP.tweets",
+    "pk": 4,
+    "fields": {
+        "created_date": "2017-02-26T21:28:58.896Z",
+        "modified_date": "2017-02-26T21:28:58.897Z",
+        "tweet": "example tweet",
+        "approved": 1,
+        "time_interval": null,
+        "scheduled_time": "2017-02-26T21:28:58.895Z",
+        "sent_time": null
+    }
+},
+{
+    "model": "celery_APP.tweets",
+    "pk": 5,
+    "fields": {
+        "created_date": "2017-02-26T21:33:11.245Z",
+        "modified_date": "2017-02-26T21:33:11.246Z",
+        "tweet": "example tweet",
+        "approved": 1,
+        "time_interval": null,
+        "scheduled_time": "2017-02-26T21:33:11.245Z",
+        "sent_time": null
+    }
+},
+{
+    "model": "celery_APP.tweets",
+    "pk": 6,
+    "fields": {
+        "created_date": "2017-02-26T21:50:36.611Z",
+        "modified_date": "2017-02-27T19:28:53.196Z",
+        "tweet": "second fake tweet",
+        "approved": 1,
+        "time_interval": null,
+        "scheduled_time": null,
+        "sent_time": null
+    }
+},
+{
+    "model": "celery_APP.tweets",
+    "pk": 7,
+    "fields": {
+        "created_date": "2017-02-27T19:20:09.833Z",
+        "modified_date": "2017-02-27T19:20:09.833Z",
+        "tweet": "3rd fake tweet",
+        "approved": null,
+        "time_interval": null,
+        "scheduled_time": "2017-02-27T00:12:00Z",
+        "sent_time": null
+    }
+},
+{
+    "model": "celery_APP.tweets",
+    "pk": 8,
+    "fields": {
+        "created_date": "2017-02-27T19:26:18.219Z",
+        "modified_date": "2017-02-27T19:26:18.220Z",
+        "tweet": "3rd fake tweet",
+        "approved": null,
+        "time_interval": null,
+        "scheduled_time": "1987-12-31T11:11:00Z",
+        "sent_time": null
+    }
+},
+{
+    "model": "celery_APP.tweets",
+    "pk": 9,
+    "fields": {
+        "created_date": "2017-02-27T19:27:19.233Z",
+        "modified_date": "2017-02-27T20:38:35.442Z",
+        "tweet": "change change fake tweet",
+        "approved": 1,
+        "time_interval": 1,
+        "scheduled_time": null,
+        "sent_time": null
+    }
+},
+{
+    "model": "celery_APP.tweets",
+    "pk": 10,
+    "fields": {
+        "created_date": "2017-02-27T19:27:28.345Z",
+        "modified_date": "2017-02-27T19:31:24.599Z",
+        "tweet": "3rd fake tweet",
+        "approved": 1,
+        "time_interval": null,
+        "scheduled_time": null,
+        "sent_time": null
+    }
+},
+{
+    "model": "celery_APP.appconfig",
+    "pk": 1,
+    "fields": {
+        "created_date": "2017-02-26T21:06:53.878Z",
+        "modified_date": "2017-02-26T21:06:53.878Z",
+        "auto_send": true,
+        "default_send_interval": 15
+    }
+},
+{
+    "model": "celery_APP.appconfig",
+    "pk": 2,
+    "fields": {
+        "created_date": "2017-02-26T21:07:03.354Z",
+        "modified_date": "2017-02-26T21:07:03.354Z",
+        "auto_send": false,
+        "default_send_interval": 15
+    }
+},
+{
+    "model": "celery_APP.appconfig",
+    "pk": 3,
+    "fields": {
+        "created_date": "2017-02-26T21:26:38.057Z",
+        "modified_date": "2017-02-26T21:26:38.057Z",
+        "auto_send": true,
+        "default_send_interval": 1
+    }
+}
+]
