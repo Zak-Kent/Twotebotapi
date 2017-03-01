@@ -21,6 +21,10 @@ CELERY_BROKER_URL = 'amqp://guest:guest@localhost//'
 
 CELERY_RESULT_BACKEND = 'django-db'
 
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ('rest_framework.filters.DjangoFilterBackend',)
+}
 # celery settings -----------------------------------------------
 
 # Quick-start development settings - unsuitable for production
@@ -47,6 +51,7 @@ INSTALLED_APPS = [
     'celery_APP',
     'rest_framework',
     'django_celery_results',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -122,7 +127,7 @@ USE_I18N = True
 USE_L10N = True
 
 # changed to get around time zone warning 
-USE_TZ = False
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
