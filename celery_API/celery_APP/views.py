@@ -56,7 +56,6 @@ class OutgoingTweets(generics.ListCreateAPIView):
 
         if pending is not None:
             pend = True if pending == 'True' else False
-            print(pend)
             queryset = queryset.filter(sent_time__isnull=pend)
         return queryset
 
