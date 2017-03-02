@@ -1,10 +1,11 @@
 from __future__ import absolute_import, unicode_literals
-from celery import shared_task
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from datetime import datetime, timedelta
 
 from .models import Tweets, AppConfig
+
+from twotebotapi.celery import app 
 
 # callback func used to trigger sending logic task anytime the tweet model saves 
 @receiver(post_save)
@@ -40,7 +41,7 @@ def tweet_scheduler(tweet):
     print("tweet scheduled inside tweet_scheduler for: {}".format(eta_time))
     return
 
-@shared_task
+@app.task
 def tweeter(tweet, id):
     """
     send tweet out 
@@ -53,7 +54,7 @@ def tweeter(tweet, id):
     # still need to add the sending of tweet to twitter
     return 
 
-@shared_task
+@app.task
 def tweet_adder(tweet):
     """
     send or stage tweet depending on value in AppConfig table, save tweet record
