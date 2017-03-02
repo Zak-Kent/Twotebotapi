@@ -4,7 +4,6 @@ from django.dispatch import receiver
 from datetime import datetime, timedelta
 
 from .models import Tweets, AppConfig
-
 from twotebotapi.celery import app 
 
 # callback func used to trigger sending logic task anytime the tweet model saves 
@@ -41,8 +40,12 @@ def tweet_scheduler(tweet):
     print("tweet scheduled inside tweet_scheduler for: {}".format(eta_time))
     return
 
-@app.task
-def tweeter(tweet, id):
+@app.task(
+    bind=True,
+    max_retries=3,
+    soft_time_limit=5 # time limit is in seconds.
+)
+def tweeter(self, tweet, id):
     """
     send tweet out 
     """ 
@@ -54,8 +57,12 @@ def tweeter(tweet, id):
     # still need to add the sending of tweet to twitter
     return 
 
-@app.task
-def tweet_adder(tweet):
+@app.task(
+    bind=True,
+    max_retries=3,
+    soft_time_limit=5 # time limit is in seconds.
+)
+def tweet_adder(self, tweet):
     """
     send or stage tweet depending on value in AppConfig table, save tweet record
     """ 
