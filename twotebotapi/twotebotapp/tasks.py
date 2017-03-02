@@ -2,12 +2,13 @@ from __future__ import absolute_import, unicode_literals
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from datetime import datetime, timedelta
+from celery.decorators import periodic_task
 
 from .models import Tweets, AppConfig
 from twotebotapi.celery import app 
 
-# callback func used to trigger sending logic task anytime the tweet model saves 
-@receiver(post_save)
+# callback func used to trigger sending logic task anytime the Tweets model saves 
+@receiver(post_save, sender=Tweets, dispatch_uid="unique_identifier")
 def tweet_model_callback(sender, **kwargs):
     """
     Callback function that gets triggered on a change to object in model.
@@ -40,14 +41,27 @@ def tweet_scheduler(tweet):
     print("tweet scheduled inside tweet_scheduler for: {}".format(eta_time))
     return
 
+# sets up periodic tasks with beat after app is finalized
+@app.on_after_finalize.connect
+def setup_periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(10.0, beat_tweet_scheduler.s(), name='check db for pending tweets')
+
+@app.task
+def beat_tweet_scheduler():
+    # a beat task that runs every 10 seconds checking db for scheduled tweets that need to be sent within 
+    # next 30 seconds, if those tweets exist calc eta time and set up tweeter task 
+
+    print("beat scheduled")
+    return
+
 @app.task(
     bind=True,
     max_retries=3,
-    soft_time_limit=5 # time limit is in seconds.
+    soft_time_limit=5 # 5 seconds before task times out
 )
 def tweeter(self, tweet, id):
     """
-    send tweet out 
+    sends tweet out 
     """ 
     print("tweet sent, indside tweeter : {}".format(tweet))
 
@@ -60,7 +74,7 @@ def tweeter(self, tweet, id):
 @app.task(
     bind=True,
     max_retries=3,
-    soft_time_limit=5 # time limit is in seconds.
+    soft_time_limit=5 # 5 seconds before task times out
 )
 def tweet_adder(self, tweet):
     """
@@ -72,8 +86,6 @@ def tweet_adder(self, tweet):
 
     tweet_obj = Tweets(tweet=tweet, approved=approved)
     tweet_obj.save()
-
-    
     return
 
 
