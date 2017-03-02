@@ -64,6 +64,8 @@ def tweet_adder(tweet):
 
     tweet_obj = Tweets(tweet=tweet, approved=approved)
     tweet_obj.save()
+
+    
     return
 
 

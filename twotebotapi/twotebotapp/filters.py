@@ -1,5 +1,5 @@
 import django_filters
-from celery_APP.models import Tweets
+from twotebotapp.models import Tweets
 
 APPROVAL_CHOICES = (
     (0, 'needs_action'),

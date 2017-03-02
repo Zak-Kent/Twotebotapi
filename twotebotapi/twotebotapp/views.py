@@ -34,7 +34,7 @@ def outbound_tweets(request, pk):
 
 class ListCreateAppConfig(generics.ListCreateAPIView):
     """
-    endpoint to update current config settings by adding a config object to table
+    Endpoint to update current config settings by adding a config object to table
     """
     queryset = models.AppConfig.objects.all()
     serializer_class = serializers.AppConfigSerializer
@@ -42,7 +42,7 @@ class ListCreateAppConfig(generics.ListCreateAPIView):
 
 class OutgoingTweets(generics.ListAPIView):
     """
-    tweet endpoint to add info and used by front end to display tweet data 
+    Tweet endpoint to add info and used by front end to display tweet data 
     """
     serializer_class = serializers.TweetSerializer
     filter_class = filters.TweetFilter
@@ -63,7 +63,7 @@ class OutgoingTweets(generics.ListAPIView):
 
 class RetrieveDestroyTweets(generics.RetrieveDestroyAPIView):
     """
-    utility endpoint used to clean out tweets when manually testing
+    Utility endpoint used to clean out tweets when manually testing
     """
     queryset = models.Tweets.objects.all()
     serializer_class = serializers.TweetSerializer

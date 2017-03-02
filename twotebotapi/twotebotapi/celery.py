@@ -4,9 +4,9 @@ from celery import Celery
 
 
 # set the default Django settings module for the 'celery' program.
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'celery_API.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'twotebotapi.settings')
 
-app = Celery('celery_API')
+app = Celery('twotebotapi')
 
 # Using a string here means the workers don't have to serialize
 # the configuration object to child processes.

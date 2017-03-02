@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 import json
 
 from .models import Tweets, AppConfig
+from mock import patch
 
         
 class OutBoundTweetsEndpoint(TestCase):
@@ -38,6 +39,14 @@ class OutBoundTweetsEndpoint(TestCase):
         self.assertEqual(json_one, json_two)
         # 2 tweets in fixture match query
         self.assertEqual(len(json_one), 2)
+
+
+    @patch(".task.datetime.utcnow")
+    def test_scheduler(self, fakeutc):
+        fakeutc.return_value = "add datetime object"
+
+        
+
 
 
 
