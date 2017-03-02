@@ -1,5 +1,4 @@
 import django_filters
-from distutils.util import strtobool
 from celery_APP.models import Tweets
 
 APPROVAL_CHOICES = (
@@ -13,4 +12,4 @@ class TweetFilter(django_filters.FilterSet):
 
     class Meta:
         model = Tweets
-        fields = ['approved', 'scheduled_time']
+        fields = ['approved',]

@@ -1,6 +1,4 @@
 from django.test import TestCase, Client
-# from unittest.mock import MagicMock
-# from django.db.models import signals
 import json
 
 from .models import Tweets, AppConfig
@@ -38,7 +36,7 @@ class OutBoundTweetsEndpoint(TestCase):
         json_one = self.api_call("/twitter/tweets/?pending=True&approved=0")
         json_two = self.api_call("/twitter/tweets/?approved=0&pending=True")
         self.assertEqual(json_one, json_two)
-        # 2 tweets in fixture
+        # 2 tweets in fixture match query
         self.assertEqual(len(json_one), 2)
 
 

@@ -1,5 +1,4 @@
 from rest_framework import generics
-
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,12 +8,11 @@ from . import models
 from . import filters 
 from .tasks import tweeter, tweet_adder, tweet_scheduler
 
-# -----------------------------------------------------------------------
-# endpoint to change records in outgoing tweet table
+
 @api_view(['GET', 'PUT'])
 def outbound_tweets(request, pk):
     """
-    Retrieve, update or delete a tweet instance.
+    Retrieve or update a tweet instance, used by frontend to trigger scheduling
     """
     try:
         tweet = models.Tweets.objects.get(pk=pk)
@@ -26,7 +24,6 @@ def outbound_tweets(request, pk):
         return Response(serializer.data)
 
     elif request.method == 'PUT':
-        # needs to have approval and scheduled sending time validated 
         serializer = serializers.TweetSerializer(tweet, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -34,15 +31,19 @@ def outbound_tweets(request, pk):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# -----------------------------------------------------------------------
-# endpoint to update current config settings by adding a config object to table
+
 class ListCreateAppConfig(generics.ListCreateAPIView):
+    """
+    endpoint to update current config settings by adding a config object to table
+    """
     queryset = models.AppConfig.objects.all()
     serializer_class = serializers.AppConfigSerializer
 
-# -----------------------------------------------------------------------
-# tweet endpoint to add info and used by front end to display tweet data 
-class OutgoingTweets(generics.ListCreateAPIView):
+
+class OutgoingTweets(generics.ListAPIView):
+    """
+    tweet endpoint to add info and used by front end to display tweet data 
+    """
     serializer_class = serializers.TweetSerializer
     filter_class = filters.TweetFilter
 
@@ -60,12 +61,13 @@ class OutgoingTweets(generics.ListCreateAPIView):
         return queryset
 
 
-# -----------------------------------------------------------------------
-# utility endpoint used to clean out tweets when manually testing
 class RetrieveDestroyTweets(generics.RetrieveDestroyAPIView):
+    """
+    utility endpoint used to clean out tweets when manually testing
+    """
     queryset = models.Tweets.objects.all()
     serializer_class = serializers.TweetSerializer
-# -----------------------------------------------------------------------
+
 
 
 
