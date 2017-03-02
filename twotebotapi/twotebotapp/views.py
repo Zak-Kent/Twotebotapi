@@ -40,7 +40,7 @@ class ListCreateAppConfig(generics.ListCreateAPIView):
     serializer_class = serializers.AppConfigSerializer
 
 
-class OutgoingTweets(generics.ListAPIView):
+class OutgoingTweets(generics.ListCreateAPIView):
     """
     Tweet endpoint to add info and used by front end to display tweet data 
     """
