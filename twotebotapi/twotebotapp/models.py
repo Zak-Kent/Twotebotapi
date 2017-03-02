@@ -21,6 +21,7 @@ class Tweets(BaseModel):
     approved = models.IntegerField(choices=APPROVAL_CHOICES, default=0)
     time_interval = models.IntegerField(null=True, blank=True)
     scheduled_time = models.DateTimeField(default=None, null=True, blank=True)
+    task_scheduled = models.BooleanField(default=False)
     sent_time = models.DateTimeField(default=None, null=True, blank=True)
 
 

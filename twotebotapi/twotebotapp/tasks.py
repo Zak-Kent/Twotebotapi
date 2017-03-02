@@ -36,7 +36,7 @@ def tweet_scheduler(tweet):
     eta_time = datetime.utcnow() + timedelta(minutes=wait_time)
     Tweets.objects.filter(pk=tweet.id).update(scheduled_time=eta_time)
 
-    tweeter.apply_async((tweet.tweet, tweet.id), eta=eta_time)
+    # tweeter.apply_async((tweet.tweet, tweet.id), eta=eta_time)
 
     print("tweet scheduled inside tweet_scheduler for: {}".format(eta_time))
     return
@@ -49,15 +49,24 @@ def setup_periodic_tasks(sender, **kwargs):
 @app.task
 def beat_tweet_scheduler():
     # a beat task that runs every 10 seconds checking db for scheduled tweets that need to be sent within 
-    # next 30 seconds, if those tweets exist calc eta time and set up tweeter task 
+    # next 2 mins, if those tweets exist calc eta time and set up tweeter task 
+    start_time = datetime.utcnow()
+    end_time = start_time + timedelta(minutes=2)
 
+
+    tweets = Tweets.objects.filter(sent_time__isnull=True) \
+                           .filter(task_scheduled__exact=False) \
+                           .filter(scheduled_time__range=(start_time, end_time)) 
+
+    print(tweets)
     print("beat scheduled")
     return
 
 @app.task(
     bind=True,
     max_retries=3,
-    soft_time_limit=5 # 5 seconds before task times out
+    soft_time_limit=5, # 5 seconds before task times out
+    # ignore_result=True
 )
 def tweeter(self, tweet, id):
     """
@@ -74,7 +83,8 @@ def tweeter(self, tweet, id):
 @app.task(
     bind=True,
     max_retries=3,
-    soft_time_limit=5 # 5 seconds before task times out
+    soft_time_limit=5, # 5 seconds before task times out
+    # ignore_result=True
 )
 def tweet_adder(self, tweet):
     """
