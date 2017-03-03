@@ -25,7 +25,10 @@ class Tweets(BaseModel):
     sent_time = models.DateTimeField(default=None, null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        if self.approved == 1:
+        """
+        Will calc and write tweet scheduled time when a tweet is approved
+        """
+        if self.approved == 1 and self.scheduled_time is None:
             if self.time_interval is None:
                 wait_time = AppConfig.objects.latest("id").default_send_interval 
             else: 
