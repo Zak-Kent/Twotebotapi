@@ -7,60 +7,71 @@ from celery.decorators import periodic_task
 from .models import Tweets, AppConfig
 from twotebotapi.celery import app 
 
-# callback func used to trigger sending logic task anytime the Tweets model saves 
-@receiver(post_save, sender=Tweets, dispatch_uid="unique_identifier")
+# You may need to move this signal into the models.py file and then trigger the action needed from here. 
+@receiver(post_save, sender=Tweets)
 def tweet_model_callback(sender, **kwargs):
     """
-    Callback function that gets triggered on a change to object in model.
-    Send tweets needing scheduling to tweet_scheduler
+    Func used to schedule tweet send time anytime the Tweets model saves/updates
     """
     # grab tweets that still need to be scheduled for future with celery 
+    testy_test()
+    
+
+def testy_test():
     tweets = Tweets.objects.filter(approved__exact=1) \
                            .filter(scheduled_time__isnull=True)
 
+    logger_check.delay("test")
+
     for tweet in tweets: 
-        tweet_scheduler(tweet)
+        # check to see if tweet has custom wait time, if not use appconfig default
+        if tweet.time_interval is None:
+            wait_time = AppConfig.objects.latest("id").default_send_interval   
+        else: 
+            wait_time = tweet.time_interval
+
+        eta_time = datetime.utcnow() + timedelta(minutes=wait_time)
+        Tweets.objects.filter(pk=tweet.id).update(scheduled_time=eta_time)
+        print(eta_time)
 
     print("Request finished!, inside tweet_callback")
-    return 
-
-def tweet_scheduler(tweet):
-    """
-    Schedule tweets for a time in the futre using Celery ETA 
-    """
-    if tweet.time_interval is None:
-        wait_time = AppConfig.objects.latest("id").default_send_interval   
-    else: 
-        wait_time = tweet.time_interval
-
-    eta_time = datetime.utcnow() + timedelta(minutes=wait_time)
-    Tweets.objects.filter(pk=tweet.id).update(scheduled_time=eta_time)
-
-    # tweeter.apply_async((tweet.tweet, tweet.id), eta=eta_time)
-
-    print("tweet scheduled inside tweet_scheduler for: {}".format(eta_time))
     return
 
-# sets up periodic tasks with beat after app is finalized
+@app.task
+def logger_check(word):
+    print(word)
+
+
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(10.0, beat_tweet_scheduler.s(), name='check db for pending tweets')
+    """
+    Set up periodic tasks with beat after app is finalized and loaded 
+    """
+    # beat task that runs every 30 seconds and calls beat_tweet_scheduler
+    sender.add_periodic_task(30.0, beat_tweet_scheduler.s(), 
+                            name='check db for pending tweets')
 
 @app.task
 def beat_tweet_scheduler():
-    # a beat task that runs every 10 seconds checking db for scheduled tweets that need to be sent within 
-    # next 2 mins, if those tweets exist calc eta time and set up tweeter task 
+    """
+    Check for tweets that are scheduled to go out within next minute & schedule 
+    """ 
     start_time = datetime.utcnow()
-    end_time = start_time + timedelta(minutes=2)
-
-
+    end_time = start_time + timedelta(minutes=1)
     tweets = Tweets.objects.filter(sent_time__isnull=True) \
                            .filter(task_scheduled__exact=False) \
                            .filter(scheduled_time__range=(start_time, end_time)) 
 
-    print(tweets)
+    # schedule tweeter task and then set tweet task_scheduled field to True
+    for tweet in tweets:
+        tweeter.apply_async((tweet.tweet, tweet.id), eta=tweet.scheduled_time)
+        Tweets.objects.filter(pk=tweet.id).update(task_scheduled=True)
+        print(tweet.tweet)
     print("beat scheduled")
     return
+
+# ----------------------------------------------------------------------------
+# need to link code below to twitter bot 
 
 @app.task(
     bind=True,
@@ -70,7 +81,7 @@ def beat_tweet_scheduler():
 )
 def tweeter(self, tweet, id):
     """
-    sends tweet out 
+    Needs to have the process for sending a tweet to Twitter 
     """ 
     print("tweet sent, indside tweeter : {}".format(tweet))
 
@@ -88,7 +99,9 @@ def tweeter(self, tweet, id):
 )
 def tweet_adder(self, tweet):
     """
-    send or stage tweet depending on value in AppConfig table, save tweet record
+    Send or stage tweet depending on value in AppConfig table, save tweet record
+    ********* this functionality needs to be modified and included in bot *********
+    ********* may not need to be a celery task, bot could write to model **********
     """ 
     config_obj = AppConfig.objects.latest("id")
     # Choices on approved field are 0-2 with 0 meaning pending
@@ -97,12 +110,5 @@ def tweet_adder(self, tweet):
     tweet_obj = Tweets(tweet=tweet, approved=approved)
     tweet_obj.save()
     return
-
-
-
-
-
-
-
 
 

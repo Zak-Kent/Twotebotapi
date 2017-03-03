@@ -6,7 +6,6 @@ from rest_framework import status
 from . import serializers
 from . import models
 from . import filters 
-from .tasks import tweeter, tweet_adder, tweet_scheduler
 
 
 @api_view(['GET', 'PUT'])
@@ -31,6 +30,10 @@ def outbound_tweets(request, pk):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class RetriveUpdateOutgoingTweets(generics.RetrieveUpdateAPIView):
+    queryset = models.Tweets.objects.all()
+    serializer_class = serializers.TweetSerializer
+
 
 class ListCreateAppConfig(generics.ListCreateAPIView):
     """
@@ -42,7 +45,24 @@ class ListCreateAppConfig(generics.ListCreateAPIView):
 
 class OutgoingTweets(generics.ListCreateAPIView):
     """
-    Tweet endpoint to add info and used by front end to display tweet data 
+    Tweet endpoint to display tweet info used by front end.
+
+    Two filter options are available through the use of querystring params.
+
+    Option one: "approved" - lets user filter on current level of tweet approval
+    Tweet approval choices:
+        0 - needs_approval
+        1 - approved
+        2 - denied
+
+    Option two: "pending" - T/F flag filters if tweet is still waiting to be sent
+
+    Ex.
+    /twitter/tweets/?approved=1 --> returns all tweets that are approved
+
+    /twitter/tweets/?pending=True --> returns all tweets still waiting to be sent
+
+    /twitter/tweets/?approved=0&pending=True --> you can combine these query params in any order
     """
     serializer_class = serializers.TweetSerializer
     filter_class = filters.TweetFilter

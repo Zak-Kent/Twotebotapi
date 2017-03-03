@@ -6,6 +6,7 @@ class TweetSerializer(serializers.ModelSerializer):
         model = models.Tweets
         # fields = ('id', 'tweet', 'approved', 'time_interval')
         fields = '__all__'
+        # exclude = ('task_scheduled', )
         
 
 
