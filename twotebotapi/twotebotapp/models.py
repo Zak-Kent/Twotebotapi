@@ -30,7 +30,12 @@ class Tweets(BaseModel):
         """
         if self.approved == 1 and self.scheduled_time is None:
             if self.time_interval is None:
-                wait_time = AppConfig.objects.latest("id").default_send_interval 
+                try:
+                    # if the AppConfig table is empty this will throw DoesNotExist
+                    wait_time = AppConfig.objects.latest("id").default_send_interval   
+                except:
+                    # if no wait_time in AppConfig default to 15 mins
+                    wait_time = 15
             else: 
                 wait_time = self.time_interval
             eta = datetime.utcnow() + timedelta(minutes=wait_time)

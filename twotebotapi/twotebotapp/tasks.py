@@ -30,7 +30,6 @@ def beat_tweet_scheduler():
     for tweet in tweets:
         tweeter.apply_async((tweet.tweet, tweet.id), eta=tweet.scheduled_time)
         Tweets.objects.filter(pk=tweet.id).update(task_scheduled=True)
-        print(tweet.tweet)
     print("beat scheduled")
     return
 
@@ -75,4 +74,7 @@ def tweet_adder(self, tweet):
     tweet_obj.save()
     return
 
+# need beat task to trigger when tweets are being searched for, have a table that lists pending 
+# query hashtags that the bot will search for. 
+# make a fake twitter account and start sending tweets out from it. 
 

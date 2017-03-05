@@ -1,36 +1,14 @@
 from rest_framework import generics
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
 
 from . import serializers
 from . import models
 from . import filters 
 
 
-@api_view(['GET', 'PUT'])
-def outbound_tweets(request, pk):
-    """
-    Retrieve or update a tweet instance, used by frontend to trigger scheduling
-    """
-    try:
-        tweet = models.Tweets.objects.get(pk=pk)
-    except models.Tweets.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        serializer = serializers.TweetSerializer(tweet)
-        return Response(serializer.data)
-
-    elif request.method == 'PUT':
-        serializer = serializers.TweetSerializer(tweet, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class RetriveUpdateOutgoingTweets(generics.RetrieveUpdateAPIView):
+    """
+    Endpoint that lets a user send PUT or PATCH request to updat a tweet object
+    """
     queryset = models.Tweets.objects.all()
     serializer_class = serializers.TweetSerializer
 

@@ -19,6 +19,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # celery settings -----------------------------------------------
 CELERY_BROKER_URL = 'amqp://guest:guest@localhost//'
 
+CELERY_ALWAYS_EAGER = False
+
 CELERY_RESULT_BACKEND = 'django-db'
 
 REST_FRAMEWORK = {
@@ -126,7 +128,7 @@ USE_I18N = True
 USE_L10N = True
 
 # changed to get around time zone warning 
-USE_TZ = False
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
