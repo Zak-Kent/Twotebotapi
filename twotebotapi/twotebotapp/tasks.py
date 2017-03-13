@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 from datetime import datetime, timedelta
 from celery.decorators import periodic_task
 
+from twotebotapp.tweepy_connect import tweepy_send_tweet
 from .models import Tweets, AppConfig
 from twotebotapi.celery import app 
 
@@ -46,12 +47,12 @@ def tweeter(self, tweet, id):
     """
     Needs to have the process for sending a tweet to Twitter 
     """ 
-    print("tweet sent, indside tweeter : {}".format(tweet))
-
     time_sent = datetime.utcnow()
     Tweets.objects.filter(pk=id).update(sent_time=time_sent)
 
-    # still need to add the sending of tweet to twitter
+    tweepy_send_tweet(tweet)
+    print("tweet sent, indside tweeter : {}".format(tweet))
+    
     return 
 
 @app.task(
@@ -63,8 +64,6 @@ def tweeter(self, tweet, id):
 def tweet_adder(self, tweet):
     """
     Send or stage tweet depending on value in AppConfig table, save tweet record
-    ********* this functionality needs to be modified and included in bot *********
-    ********* may not need to be a celery task, bot could write to model **********
     """ 
     config_obj = AppConfig.objects.latest("id")
     # Choices on approved field are 0-2 with 0 meaning pending
@@ -73,8 +72,4 @@ def tweet_adder(self, tweet):
     tweet_obj = Tweets(tweet=tweet, approved=approved)
     tweet_obj.save()
     return
-
-# need beat task to trigger when tweets are being searched for, have a table that lists pending 
-# query hashtags that the bot will search for. 
-# make a fake twitter account and start sending tweets out from it. 
-
+    
