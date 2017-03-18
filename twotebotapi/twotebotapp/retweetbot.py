@@ -50,9 +50,10 @@ class RetweetBot:
     '''
         Get all tweets
     '''
-    def get_tweets(self,topic="#pycon",quantity=1,result_type="recent,popular"):
+    def get_tweets(self,topic="#zppzaa",quantity=1,result_type="recent,popular"):
         tweet_list = self.api.search(q=topic,count=quantity,lang='en',result_type=result_type)
         print("Retrieved {} candidate tweets.".format(len(tweet_list)))
+        print(tweet_list[0].text)
         self.tweet_list += tweet_list
 
 
@@ -152,11 +153,6 @@ class RetweetBot:
 
         return result
 
-
-def get_pycon_tweets():
-    bot = RetweetBot()
-
-    print(bot.get_tweets())
 
 # if __name__ == '__main__':
 #     bot = RetweetBot()
