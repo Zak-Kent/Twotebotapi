@@ -50,7 +50,7 @@ def tweeter(self, tweet, id):
     time_sent = datetime.utcnow()
     Tweets.objects.filter(pk=id).update(sent_time=time_sent)
 
-    tweepy_send_tweet(tweet)
+    # tweepy_send_tweet(tweet)
     print("tweet sent, indside tweeter : {}".format(tweet))
     
     return 
