@@ -3,6 +3,8 @@
 python 2.7 or 3.5
 python manage.py shell_plus
 >>> run twote/bot python machinelearning ai nlp happy sad depressed angry upset joy bliss unhappy
+
+Code written by Hobson github: https://github.com/hobson
 """
 
 from __future__ import print_function, unicode_literals, division, absolute_import
