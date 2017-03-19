@@ -4,6 +4,8 @@ from . import serializers
 from . import models
 from . import filters 
 
+from .openspacesbot import get_pycon_tweets
+
 
 class RetriveUpdateOutgoingTweets(generics.RetrieveUpdateAPIView):
     """
@@ -46,6 +48,8 @@ class OutgoingTweets(generics.ListCreateAPIView):
     filter_class = filters.TweetFilter
 
     def get_queryset(self):
+        get_pycon_tweets()
+
         queryset = models.Tweets.objects.all()
         pending = self.request.query_params.get('pending', None)
 

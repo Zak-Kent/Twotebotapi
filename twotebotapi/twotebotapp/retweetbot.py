@@ -9,7 +9,7 @@ from nltk import word_tokenize
 from sutime import SUTime
 import json
 
-from twotebotapp.secrets import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
+from secrets import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
 
 
 BAD_WORDS_URL='https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/master/en'
@@ -39,7 +39,9 @@ class RetweetBot:
 
         # sutime
         # jar_files = os.environ.get('JAR_FILES','../python-sutime/jars')
-        # self.sutime = SUTime(jars=jar_files, mark_time_ranges=True)
+        jar_files = '../python-sutime/jars'
+        
+        self.sutime = SUTime(jars=jar_files, mark_time_ranges=True)
 
         # nltk data append
         # nltk.data.path.append(os.environ.get('NLTK_CORPUS','/webapps/hackor/hackor/nltk_data'))
@@ -50,7 +52,7 @@ class RetweetBot:
     '''
         Get all tweets
     '''
-    def get_tweets(self,topic="#zppzaa",quantity=1,result_type="recent,popular"):
+    def get_tweets(self,topic="#zzpzaah",quantity=1,result_type="recent,popular"):
         tweet_list = self.api.search(q=topic,count=quantity,lang='en',result_type=result_type)
         print("Retrieved {} candidate tweets.".format(len(tweet_list)))
         print(tweet_list[0].text)
@@ -154,6 +156,14 @@ class RetweetBot:
         return result
 
 
-# if __name__ == '__main__':
-#     bot = RetweetBot()
-#     print bot.get_time_and_room('#importantigravity (acro yoga: poses for pair programmers) @ 5pm in open space B114! #pycon #pyconopenspaces :-)')
+if __name__ == '__main__':
+    bot = RetweetBot()
+    print(bot.get_time_and_room('#importantigravity (acro yoga: poses for pair programmers) @ 5pm in open space B114! #pycon #pyconopenspaces :-)'))
+
+
+
+
+
+
+
+
