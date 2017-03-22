@@ -9,7 +9,7 @@ from nltk import word_tokenize
 from sutime import SUTime
 import json
 
-from secrets import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
+from twotebotapp.secrets import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
 
 
 BAD_WORDS_URL='https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/master/en'
@@ -39,7 +39,7 @@ class RetweetBot:
 
         # sutime
         # jar_files = os.environ.get('JAR_FILES','../python-sutime/jars')
-        jar_files = '../python-sutime/jars'
+        jar_files = '/Users/zakkent/Documents/celery_test/twotebotapi/python-sutime/jars'
         
         self.sutime = SUTime(jars=jar_files, mark_time_ranges=True)
 

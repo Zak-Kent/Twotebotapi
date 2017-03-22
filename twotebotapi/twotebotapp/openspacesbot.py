@@ -1,4 +1,4 @@
-from retweetbot import RetweetBot
+from twotebotapp.retweetbot import RetweetBot
 
 
 def get_pycon_tweets():
