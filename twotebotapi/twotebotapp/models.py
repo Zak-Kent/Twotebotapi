@@ -46,4 +46,34 @@ class Tweets(BaseModel):
 class AppConfig(BaseModel):
     auto_send = models.BooleanField()
     default_send_interval = models.IntegerField(default=15)
+
+
+# ----------------------------------------------------------------------
+# models needed for streaming tweets and saving those objects
+class StreamedTweet(BaseModel):
+    id_str = models.CharField(max_length=256, db_index=True, default='')
+    user = models.ForeignKey('User', blank=True, null=True)
+    source = models.CharField(max_length=256, blank=True, null=True)
+    text = models.CharField(max_length=256, blank=True, null=True)
+    location = models.CharField(max_length=256, blank=True, null=True)
+    favorite_count = models.IntegerField(default=-1, null=True)
+
+
+
+class User(models.Model):
+    id = models.AutoField(primary_key=True)
+    id_str = models.CharField(max_length=256, db_index=True, default='')
+    screen_name = models.CharField(max_length=256, blank=True, null=True)
+    verified = models.IntegerField(blank=True, null=True)
+    time_zone = models.CharField(max_length=256, blank=True, null=True)
+    utc_offset = models.IntegerField(blank=True, null=True)
+    protected = models.IntegerField(blank=True, null=True)
+    location = models.CharField(max_length=256, blank=True, null=True)
+    lang = models.CharField(max_length=256, blank=True, null=True)
+    followers_count = models.IntegerField(blank=True, null=True)
+    created_date = models.DateTimeField(null=True)
+    statuses_count = models.IntegerField(blank=True, null=True)
+    friends_count = models.IntegerField(blank=True, null=True)
+    favourites_count = models.IntegerField(default=-1, null=True)
+
     

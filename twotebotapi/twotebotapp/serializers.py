@@ -14,3 +14,15 @@ class AppConfigSerializer(serializers.ModelSerializer):
     class Meta: 
         model = models.AppConfig
         fields = '__all__'
+
+
+class StreamedTweetSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = models.StreamedTweet
+        fields = '__all__'
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = models.User
+        fields = '__all__'
