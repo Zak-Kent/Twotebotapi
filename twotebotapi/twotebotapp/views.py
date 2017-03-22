@@ -46,7 +46,6 @@ class OutgoingTweets(generics.ListCreateAPIView):
     filter_class = filters.TweetFilter
 
     def get_queryset(self):
-
         queryset = models.Tweets.objects.all()
         pending = self.request.query_params.get('pending', None)
 
