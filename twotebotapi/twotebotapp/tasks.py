@@ -5,7 +5,7 @@ from celery.decorators import periodic_task
 from twotebotapp.tweepy_connect import tweepy_send_tweet
 from .models import Tweets, AppConfig
 from twotebotapi.celery import app 
-from twotebotapp.openspacesbot import get_pycon_tweets
+
 
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -73,15 +73,6 @@ def tweet_adder(self, tweet):
     tweet_obj.save()
     return
 
-@app.task(
-    bind=True,
-    max_retries=3,
-    soft_time_limit=5, # 5 seconds before task times out
-    # ignore_result=True
-)
-def get_tweets_test(self):
-    print("inside get_tweets_test task")
-    get_pycon_tweets()
 
     
     
