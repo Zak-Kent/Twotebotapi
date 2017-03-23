@@ -50,7 +50,10 @@ def tweeter(self, tweet, id):
     time_sent = datetime.utcnow()
     Tweets.objects.filter(pk=id).update(sent_time=time_sent)
 
-    # tweepy_send_tweet(tweet)
+    # tweeting string to avoid duplicate status error 
+    # need to add RT when retweeting 
+
+    tweepy_send_tweet("Test tweet from inside celery!!!!!!")
     print("tweet sent, indside tweeter : {}".format(tweet))
     
     return 

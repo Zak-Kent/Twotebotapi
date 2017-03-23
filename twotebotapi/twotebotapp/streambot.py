@@ -44,7 +44,7 @@ class StreamListener(tweepy.StreamListener):
         tweet_record.save()    
 
         # trigger time parsing with SUTime inside streambot
-        self.streambot.parse_datetime(status.text, status.id_str)  
+        self.streambot.retweet_logic(status.text, status.id_str)  
         
     def on_error(self, status_code):
         if status_code == 420:
@@ -78,7 +78,7 @@ class Streambot:
         stream = tweepy.Stream(auth=self.api.auth, listener=self.stream_listener)
         stream.filter(track=["jjssaa"])
 
-    def parse_datetime(self, tweet, tweet_id):
+    def retweet_logic(self, tweet, tweet_id):
         """
         Use SUTime to try to parse a datetime out of a tweet, if successful
         save tweet to OutgoingTweet to be retweeted
@@ -88,7 +88,16 @@ class Streambot:
         time_room = self.get_time_and_room(tweet)
 
         print(time_room)
+        # check to make sure both time and room extracted and only one val for each
+        val_check = [val for val in time_room.values() if val != [] and len(val) == 1]
 
+        if len(val_check) == 2:
+            # check config table to see if autosend on
+            config_obj = models.AppConfig.objects.latest("id")
+            approved = 1 if config_obj.auto_send else 0
+
+            tweet_obj = models.Tweets(tweet=tweet, approved=approved)
+            tweet_obj.save()
 
     def get_time_and_room(self, tweet):
         '''
@@ -118,16 +127,6 @@ class Streambot:
                 result['room'].append(room_re.match(word).group())
 
         return result
-
-# Examples of tweet output comming back from Santi's get_room_time
-
-# @ 5pm in open space B114! jjssaa test 844708484654534657
-# {'room': ['b114'], 'date': ['2017-03-23T17:00']}
-# jjssaa without a time or room 844708647196352512
-# {'room': [], 'date': []}
-# jjssaa with only a time @ 5pm 844708770475376640
-# {'room': [], 'date': ['2017-03-23T17:00']}
-
 
 # if __name__ == "__main__":
 #     bot = Streambot()
