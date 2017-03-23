@@ -1,6 +1,8 @@
 import tweepy
 from tweepy.api import API 
 from sutime import SUTime
+from nltk import word_tokenize
+import re
 
 import twotebotapp.secrets as s
 from twotebotapp import models
@@ -41,32 +43,13 @@ class StreamListener(tweepy.StreamListener):
         tweet_record.source = status.source
         tweet_record.save()    
 
-        # trigger time parsing with SUTime
-        # must have instance of stream_bot alread setup for this call to work
+        # trigger time parsing with SUTime inside streambot
         self.streambot.parse_datetime(status.text, status.id_str)  
         
     def on_error(self, status_code):
         if status_code == 420:
             return False
 
-
-# def setup_auth():
-#     """
-#     Set up auth stuff for api and return tweepy api object
-#     """
-#     auth = tweepy.OAuthHandler(s.CONSUMER_KEY, s.CONSUMER_SECRET)
-#     auth.set_access_token(s.ACCESS_TOKEN, s.ACCESS_TOKEN_SECRET)
-#     api = tweepy.API(auth)
-
-#     return api
-
-
-# def run_stream():
-#     api = setup_auth()
-#     stream_listener = StreamListener()
-#     stream = tweepy.Stream(auth=api.auth, listener=stream_listener)
-
-#     stream.filter(track=["justaddzebras"])
 
 class Streambot:
     def __init__(self):
@@ -101,6 +84,49 @@ class Streambot:
         save tweet to OutgoingTweet to be retweeted
         """
         print(tweet, tweet_id)
+
+        time_room = self.get_time_and_room(tweet)
+
+        print(time_room)
+
+
+    def get_time_and_room(self, tweet):
+        '''
+        Get time and room number from a tweet
+        Written by Santi @ https://github.com/adavanisanti
+        '''
+        result = {}
+        result['date'] = []
+        result['room'] = []
+
+        
+        time_slots = self.sutime.parse(tweet)
+        tweet_without_time = tweet
+
+        for time_slot in time_slots:
+            tweet_without_time = tweet_without_time.replace(time_slot.get('text'),'')
+            result['date'].append(time_slot.get('value'))
+        
+        # filter_known_words = [word.lower() for word in word_tokenize(tweet_without_time) if word.lower() not in (self.stopwords + nltk.corpus.words.words())]
+        filter_known_words = [word.lower() for word in word_tokenize(tweet_without_time)]
+
+        # regular expression for room
+        room_re = re.compile('([a-zA-Z](\d{3})[-+]?(\d{3})?)')
+
+        for word in filter_known_words:
+            if room_re.match(word):
+                result['room'].append(room_re.match(word).group())
+
+        return result
+
+# Examples of tweet output comming back from Santi's get_room_time
+
+# @ 5pm in open space B114! jjssaa test 844708484654534657
+# {'room': ['b114'], 'date': ['2017-03-23T17:00']}
+# jjssaa without a time or room 844708647196352512
+# {'room': [], 'date': []}
+# jjssaa with only a time @ 5pm 844708770475376640
+# {'room': [], 'date': ['2017-03-23T17:00']}
 
 
 # if __name__ == "__main__":
