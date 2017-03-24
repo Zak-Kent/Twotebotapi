@@ -55,11 +55,21 @@ class StreamListener(tweepy.StreamListener):
 
 
 class Streambot:
+    """
+    Stream Twitter and look for tweets that contain targeted words, 
+    when tweets found look for datetime and room, if present save tweet to
+    OutgoingTweet model.  
+
+    Ex.
+    bot = Streambot()
+    # to run a stream looking for tweets about PyCon
+    bot.run_stream(["PyCon"]) 
+    """
     def __init__(self):
         self.api = self.setup_auth()
         self.stream_listener = StreamListener(self)
 
-        jar_files = os.path.join(BASE_DIR, 'python-sutime/jars') 
+        jar_files = os.path.join(BASE_DIR, "python-sutime/jars") 
         self.sutime = SUTime(jars=jar_files, mark_time_ranges=True)
 
     def setup_auth(self):
@@ -72,12 +82,14 @@ class Streambot:
 
         return api
 
-    def run_stream(self, search_list=["Pycon"]):
+    def run_stream(self, search_list=[]):
         """
-        Start stream, when matching tweet found on_status in StreamListener called 
-
+        Start stream, when matching tweet found on_status in StreamListener called. 
         search_list arg is a list of terms that will be looked for in tweets
         """
+        if search_list == []:
+            raise ValueError("Need a list of search terms as arg to run_stream")
+
         stream = tweepy.Stream(auth=self.api.auth, listener=self.stream_listener)
         stream.filter(track=search_list)
 
@@ -87,10 +99,8 @@ class Streambot:
         save tweet to OutgoingTweet to be retweeted
         """
         print(tweet, tweet_id)
-
         time_room = self.get_time_and_room(tweet)
 
-        print(time_room)
         # check to make sure both time and room extracted and only one val for each
         val_check = [val for val in time_room.values() if val != [] and len(val) == 1]
 
@@ -99,49 +109,34 @@ class Streambot:
             config_obj = models.AppConfig.objects.latest("id")
             approved = 1 if config_obj.auto_send else 0
 
+            # saving the tweet to the OutgoingTweet table triggers celery stuff
             tweet_obj = models.Tweets(tweet=tweet, approved=approved)
             tweet_obj.save()
 
     def get_time_and_room(self, tweet):
-        '''
+        """
         Get time and room number from a tweet
         Written by Santi @ https://github.com/adavanisanti
-        '''
+        """
         result = {}
-        result['date'] = []
-        result['room'] = []
-
-        
+        result["date"] = []
+        result["room"] = []
+ 
         time_slots = self.sutime.parse(tweet)
         tweet_without_time = tweet
 
         for time_slot in time_slots:
-            tweet_without_time = tweet_without_time.replace(time_slot.get('text'),'')
-            result['date'].append(time_slot.get('value'))
+            tweet_without_time = tweet_without_time.replace(time_slot.get("text"),"")
+            result["date"].append(time_slot.get("value"))
         
         # filter_known_words = [word.lower() for word in word_tokenize(tweet_without_time) if word.lower() not in (self.stopwords + nltk.corpus.words.words())]
         filter_known_words = [word.lower() for word in word_tokenize(tweet_without_time)]
 
         # regular expression for room
-        room_re = re.compile('([a-zA-Z](\d{3})[-+]?(\d{3})?)')
+        room_re = re.compile("([a-zA-Z](\d{3})[-+]?(\d{3})?)")
 
         for word in filter_known_words:
             if room_re.match(word):
-                result['room'].append(room_re.match(word).group())
+                result["room"].append(room_re.match(word).group())
 
         return result
-
-if __name__ == "__main__":
-    bot = Streambot()
-    # start stream 
-    bot.run_stream(["jjssaa"])
-
-
-
-
-
-
-
-
-
-
