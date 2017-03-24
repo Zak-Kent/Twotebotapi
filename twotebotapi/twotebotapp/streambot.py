@@ -72,16 +72,13 @@ class Streambot:
 
         return api
 
-    def run_stream(self, search_list):
+    def run_stream(self, search_list=["Pycon"]):
         """
-        Start stream, when matching tweet found on_status method of 
-        StreamListener called 
+        Start stream, when matching tweet found on_status in StreamListener called 
 
         search_list arg is a list of terms that will be looked for in tweets
         """
-        
         stream = tweepy.Stream(auth=self.api.auth, listener=self.stream_listener)
-        # add words that you want to look for in streamed tweets bellow
         stream.filter(track=search_list)
 
     def retweet_logic(self, tweet, tweet_id):
@@ -134,10 +131,10 @@ class Streambot:
 
         return result
 
-# if __name__ == "__main__":
-#     bot = Streambot(["jjssaa"])
-#     # start stream 
-#     bot.run_stream()
+if __name__ == "__main__":
+    bot = Streambot()
+    # start stream 
+    bot.run_stream(["jjssaa"])
 
 
 
