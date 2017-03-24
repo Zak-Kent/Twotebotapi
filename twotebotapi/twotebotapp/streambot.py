@@ -3,9 +3,12 @@ from tweepy.api import API
 from sutime import SUTime
 from nltk import word_tokenize
 import re
+import os
 
 import twotebotapp.secrets as s
 from twotebotapp import models
+from twotebotapi.settings import BASE_DIR
+
 
 class StreamListener(tweepy.StreamListener):
     """
@@ -14,7 +17,7 @@ class StreamListener(tweepy.StreamListener):
 
     def __init__(self, streambot, api=None):
         # needed to override __init__ to get ref to Streambot
-        # with ref method to parse datetime can be triggered in on_status callback
+        # with ref the method retweet_logic can be used in on_status
         self.api = api or API()
         self.streambot = streambot
 
@@ -53,14 +56,13 @@ class StreamListener(tweepy.StreamListener):
 
 class Streambot:
     def __init__(self):
-        self.api = self._setup_auth()
+        self.api = self.setup_auth()
         self.stream_listener = StreamListener(self)
 
-        # need to chage to use settings.BASE_DIR
-        jar_files = '/Users/zakkent/Documents/celery_test/twotebotapi/python-sutime/jars' 
+        jar_files = os.path.join(BASE_DIR, 'python-sutime/jars') 
         self.sutime = SUTime(jars=jar_files, mark_time_ranges=True)
 
-    def _setup_auth(self):
+    def setup_auth(self):
         """
         Set up auth stuff for api and return tweepy api object
         """
@@ -70,13 +72,17 @@ class Streambot:
 
         return api
 
-    def run_stream(self):
+    def run_stream(self, search_list):
         """
-        Stream data from twitter, when status recived on_status method of 
-        StreamListener called
+        Start stream, when matching tweet found on_status method of 
+        StreamListener called 
+
+        search_list arg is a list of terms that will be looked for in tweets
         """
+        
         stream = tweepy.Stream(auth=self.api.auth, listener=self.stream_listener)
-        stream.filter(track=["jjssaa"])
+        # add words that you want to look for in streamed tweets bellow
+        stream.filter(track=search_list)
 
     def retweet_logic(self, tweet, tweet_id):
         """
@@ -129,7 +135,7 @@ class Streambot:
         return result
 
 # if __name__ == "__main__":
-#     bot = Streambot()
+#     bot = Streambot(["jjssaa"])
 #     # start stream 
 #     bot.run_stream()
 

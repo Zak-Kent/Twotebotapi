@@ -2,8 +2,14 @@ from django.test import TestCase, Client
 import json
 from freezegun import freeze_time
 
+# -----------------------------------
+from mock import patch, Mock
+# import Mock
+# -----------------------------------
+
 from .models import Tweets, AppConfig
 from .tasks import beat_tweet_scheduler, tweeter
+from .streambot import Streambot 
 
  
 class TestOutBoundTweetsEndpoint(TestCase):
@@ -119,3 +125,27 @@ class TestCeleryTasks(TestCase):
 
         sent = Tweets.objects.get(pk=outgoing.id)
         self.assertEqual(bool(sent.sent_time), True)
+
+
+class TestTweepyStream(TestCase):
+
+    def setUp(self):
+        streambot_mock = Mock()
+
+    def mock_setup(self):
+        streambot_mock = Mock()
+        attrs = {'method.return_value': 3}
+
+        # mock = Mock(spec=Requests) --> assigns all values of request library to mock object
+
+        with patch.object(requests, 'get') as mock_get:
+            mock_get.return_value = mock_response = Mock()
+            self.assertEqual(api_call, status_code 200)
+
+            # this make all calls to requests.get return the mock object and the value 
+            # specified 
+
+
+
+
+
