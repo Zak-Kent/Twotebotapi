@@ -32,7 +32,7 @@ def beat_tweet_scheduler():
         tweeter.apply_async((tweet.tweet, tweet.id), eta=tweet.scheduled_time)
         Tweets.objects.filter(pk=tweet.id).update(task_scheduled=True)
     print("beat scheduled")
-    return
+    return None
 
 # ----------------------------------------------------------------------------
 # need to link code below to twitter bot 
@@ -50,11 +50,9 @@ def tweeter(self, tweet, id):
     time_sent = datetime.utcnow()
     Tweets.objects.filter(pk=id).update(sent_time=time_sent)
 
-    # tweeting string to avoid duplicate status error 
-    # need to add RT when retweeting or filter out tweets sent by our bot
     tweepy_send_tweet(tweet)
     print("tweet sent, indside tweeter : {}".format(tweet))
-    return 
+    return None
 
 @app.task(
     bind=True,
@@ -72,7 +70,7 @@ def tweet_adder(self, tweet):
 
     tweet_obj = Tweets(tweet=tweet, approved=approved)
     tweet_obj.save()
-    return
+    return None
 
 
     
