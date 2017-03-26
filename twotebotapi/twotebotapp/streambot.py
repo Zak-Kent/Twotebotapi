@@ -4,11 +4,12 @@ from sutime import SUTime
 from nltk import word_tokenize
 import re
 import os
+import datetime
 
 import twotebotapp.secrets as s
 from twotebotapp import models
 from twotebotapi.settings import BASE_DIR
-from twotebotapp.tweepy_connect import tweepy_send_dm
+from twotebotapp.tweepy_connect import tweepy_send_tweet
 
 
 class StreamListener(tweepy.StreamListener):
@@ -57,7 +58,7 @@ class StreamListener(tweepy.StreamListener):
         tweet_record.save()    
 
         # trigger time parsing with SUTime inside streambot
-        self.streambot.retweet_logic(status.text, status.id_str, status.user.id)  
+        self.streambot.retweet_logic(status.text, status.id_str, user.screen_name)  
         
     def on_error(self, status_code):
         if status_code == 420:
@@ -103,7 +104,7 @@ class Streambot:
         stream = tweepy.Stream(auth=self.api.auth, listener=self.stream_listener)
         stream.filter(track=search_list)
 
-    def retweet_logic(self, tweet, tweet_id, user_id):
+    def retweet_logic(self, tweet, tweet_id, screen_name):
         """
         Use SUTime to try to parse a datetime out of a tweet, if successful
         save tweet to OutgoingTweet to be retweeted
@@ -115,6 +116,10 @@ class Streambot:
         val_check = [val for val in time_room.values() if val != [] and len(val) == 1]
 
         if len(val_check) == 2:
+            # way to mention a user after a tweet is recieved
+            time = datetime.datetime.utcnow()
+            tweepy_send_tweet("@{} {} tweet recived".format(screen_name, time))
+
             # check config table to see if autosend on
             config_obj = models.AppConfig.objects.latest("id")
             approved = 1 if config_obj.auto_send else 0
@@ -122,9 +127,7 @@ class Streambot:
             # saving the tweet to the OutgoingTweet table triggers celery stuff
             tweet_obj = models.Tweets(tweet=tweet, approved=approved)
             tweet_obj.save()
-
-            # send dm to user letting them know we've scheduled a room
-            tweepy_send_dm(user_id, "dm from inside retweet logic")
+            
 
     def get_time_and_room(self, tweet):
         """

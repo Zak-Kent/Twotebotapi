@@ -14,5 +14,5 @@ def tweepy_send_tweet(tweet):
 
 def tweepy_send_dm(user_id, tweet):
     api = get_api()
-    dm = api.send_direct_message(user_id, tweet)
+    dm = api.send_direct_message(user_id, text=tweet)
     return None
