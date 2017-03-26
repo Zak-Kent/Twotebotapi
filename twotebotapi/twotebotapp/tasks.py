@@ -52,9 +52,8 @@ def tweeter(self, tweet, id):
 
     # tweeting string to avoid duplicate status error 
     # need to add RT when retweeting or filter out tweets sent by our bot
-    tweepy_send_tweet("Test tweet from inside celery!!!!!!")
+    tweepy_send_tweet(tweet)
     print("tweet sent, indside tweeter : {}".format(tweet))
-    
     return 
 
 @app.task(

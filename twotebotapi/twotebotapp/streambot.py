@@ -21,7 +21,17 @@ class StreamListener(tweepy.StreamListener):
         self.api = api or API()
         self.streambot = streambot
 
+        # the first item in this list is the bot's own Twitter id
+        # needed to make sure bot doesn't take action on own tweets
+        self.black_list = [841013993602863104, ]
+
     def on_status(self, status):
+
+        # need to add check to make sure that the tweet picked up isn't the one sent from the bot
+        if status.user.id in self.black_list:
+            print("tweet from bot, not real message. ignore")
+            return 
+
         # save user record to User model
         user, created = models.User.objects.get_or_create(id_str=str(status.user.id))
         user.verified = status.user.verified  # v4

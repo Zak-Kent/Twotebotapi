@@ -2,11 +2,6 @@ from django.test import TestCase, Client
 import json
 from freezegun import freeze_time
 
-# -----------------------------------
-from mock import patch, Mock
-# import Mock
-# -----------------------------------
-
 from .models import Tweets, AppConfig
 from .tasks import beat_tweet_scheduler, tweeter
 from .streambot import Streambot 
@@ -94,7 +89,7 @@ class TestCeleryTasks(TestCase):
     def setUp(self):
         AppConfig.objects.create(auto_send=True, default_send_interval=1)
 
-    @freeze_time("2017-03-03")
+    @freeze_time("2017-08-05")
     def test_beat_tweet_scheduler_schedules_correct_tweets(self):
         """
         Test that a tweet scheduled to be sent within the beat_tweet_scheduler
@@ -111,7 +106,7 @@ class TestCeleryTasks(TestCase):
         post_scheduled = Tweets.objects.get(tweet="test time tweet")
         self.assertEqual(post_scheduled.task_scheduled, True)
 
-    @freeze_time("2017-03-03")
+    @freeze_time("2017-08-05")
     def test_tweeter_sends_tweet_and_sets_field(self):
         """
         Test that tweeter task sends tweet and writes sent time to Tweet obj
