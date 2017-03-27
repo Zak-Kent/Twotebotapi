@@ -1,5 +1,7 @@
 from django.db import models
+from django.contrib.postgres.fields import JSONField
 from datetime import datetime, timedelta
+
 
 APPROVAL_CHOICES = (
     (0, 'Needs_action'),
@@ -46,6 +48,7 @@ class Tweets(BaseModel):
 class AppConfig(BaseModel):
     auto_send = models.BooleanField()
     default_send_interval = models.IntegerField(default=15)
+    ignore_users = JSONField(null=True, blank=True)
 
 
 # ----------------------------------------------------------------------
@@ -57,7 +60,6 @@ class StreamedTweet(BaseModel):
     text = models.CharField(max_length=256, blank=True, null=True)
     location = models.CharField(max_length=256, blank=True, null=True)
     favorite_count = models.IntegerField(default=-1, null=True)
-
 
 
 class User(models.Model):

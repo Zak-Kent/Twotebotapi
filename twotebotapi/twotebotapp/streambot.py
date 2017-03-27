@@ -25,11 +25,23 @@ class StreamListener(tweepy.StreamListener):
 
         # the first item in this list is the bot's own Twitter id
         # needed to make sure bot doesn't take action on own tweets
-        self.black_list = [841013993602863104, ]
+        self.ignore_users = [841013993602863104,]
+
+    def update_ignore_users(self):
+        """
+        Check app config table to see if update to ignore_users if so add user
+        """
+        config_obj = models.AppConfig.objects.latest("id")
+        ignore = [int(item["id"]) for item in config_obj.ignore_users]
+
+        self.ignore_users.append(ignore)
 
     def on_status(self, status):
 
-        if status.user.id in self.black_list:
+        # call to check for ignored users from AppConfig
+        self.update_ignore_users()
+
+        if status.user.id in self.ignore_users:
             print("tweet from bot, not real message. ignore")
             return 
 
