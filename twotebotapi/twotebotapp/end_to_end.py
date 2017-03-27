@@ -5,13 +5,10 @@ import tweepy
 from e2e_secrets import listener, sender 
 
 
-class UtilitySubClass:
+class UtilityBaseClass:
     """
     collection of utility methods needed in the class that runs the e2e tests
     """
-
-    def __init__(self):
-        return
 
     def get_time(self):
         return datetime.datetime.utcnow()
@@ -25,13 +22,14 @@ class UtilitySubClass:
         api.update_status(tweet)
         return 
 
-class EndToEnd(UtilitySubClass):
+class EndToEnd(UtilityBaseClass):
     """
     Class that helps run the actions in an end to end test of the twitter bot
     """
 
     def __init__(self):
         self.tw_listener = self.setup_tw_api(listener)
+        self.tw_sender = self.setup_tw_api(sender)
 
 
 
