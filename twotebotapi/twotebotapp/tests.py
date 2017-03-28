@@ -4,7 +4,6 @@ from freezegun import freeze_time
 
 from .models import Tweets, AppConfig
 from .tasks import beat_tweet_scheduler, tweeter
-from .streambot import Streambot 
 
  
 class TestOutBoundTweetsEndpoint(TestCase):

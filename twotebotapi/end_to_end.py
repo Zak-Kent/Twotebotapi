@@ -2,9 +2,22 @@ import datetime
 import sys
 import time
 import tweepy
+import os
+import django
+from django.forms.models import model_to_dict
 
-from e2e_secrets import listener, sender 
+# need to point Django at the right settings module access pieces of app
+os.environ["DJANGO_SETTINGS_MODULE"] = "twotebotapi.settings"
+django.setup()
 
+
+
+from twotebotapp.models import Tweets
+from twotebotapp.serializers import TweetSerializer
+from twotebotapp.secrets import listener, sender 
+
+test = Tweets.objects.latest("id")
+print(model_to_dict(test))
 
 class TwitterBot:
     """

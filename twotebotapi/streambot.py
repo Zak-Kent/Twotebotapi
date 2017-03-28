@@ -5,6 +5,11 @@ from nltk import word_tokenize
 import re
 import os
 import datetime
+import django
+
+# need to point Django at the right settings module access pieces of app
+os.environ["DJANGO_SETTINGS_MODULE"] = "twotebotapi.settings"
+django.setup()
 
 import twotebotapp.secrets as s
 from twotebotapp import models
@@ -98,8 +103,8 @@ class Streambot:
         """
         Set up auth stuff for api and return tweepy api object
         """
-        auth = tweepy.OAuthHandler(s.CONSUMER_KEY, s.CONSUMER_SECRET)
-        auth.set_access_token(s.ACCESS_TOKEN, s.ACCESS_TOKEN_SECRET)
+        auth = tweepy.OAuthHandler(s.listener["CONSUMER_KEY"], s.listener["CONSUMER_SECRET"])
+        auth.set_access_token(s.listener["ACCESS_TOKEN"], s.listener["ACCESS_TOKEN_SECRET"])
         api = tweepy.API(auth)
 
         return api
@@ -138,7 +143,6 @@ class Streambot:
             # tweet_obj = models.Tweets(tweet=tweet, approved=approved)
             # tweet_obj.save()
             
-
     def get_time_and_room(self, tweet):
         """
         Get time and room number from a tweet
@@ -166,3 +170,10 @@ class Streambot:
                 result["room"].append(room_re.match(word).group())
 
         return result
+
+
+if __name__ == '__main__':
+    bot = Streambot()
+    keyword = "adlsjlflkjdhsfla"
+    print(keyword)
+    bot.run_stream([keyword])
