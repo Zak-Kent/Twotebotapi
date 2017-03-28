@@ -1,3 +1,5 @@
 venv3
 *.pyc
 secrets.py
+project_config.py
+e2e_secrets.py
