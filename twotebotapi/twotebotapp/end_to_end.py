@@ -11,34 +11,31 @@ class TwitterBot:
     Class that helps run the actions in an end to end test of the twitter bot.
     """
     def __init__(self, account):
+        # tw_api is access point to all Tweepy methods
         self.tw_api = self.setup_tw_api(account)
-        # get user id from Twitter
-        self.user_id = self.tw_api.me()._json["id"]
+        self.user_info = self.get_user_info()
 
     def setup_tw_api(self, account):
         auth = tweepy.OAuthHandler(account["CONSUMER_KEY"], account["CONSUMER_SECRET"])
         auth.set_access_token(account["ACCESS_TOKEN"], account["ACCESS_TOKEN_SECRET"])
         return tweepy.API(auth)
 
-    def get_time(self):
-        return datetime.datetime.utcnow()
+    def get_user_info(self):
+        user_obj = self.tw_api.me()
 
-    def send_tweet(self, tweet):
-        """
-        Send tweet with unique datetime, write id to tweets list, and sleep.
-        """
-        # tweet += ": {}".format(self.get_time())
-        status = self.tw_api.update_status(tweet)
-        time.sleep(3)
+        result = {}
+        result["id"] = user_obj._json["id"]
+        result["screen_name"] = user_obj._json["screen_name"]
+        return result
 
     def get_tweets(self):
-        return self.tw_api.user_timeline(self.user_id)
+        return self.tw_api.user_timeline(self.user_info["id"])
 
     def clean_tweets(self):
         """
         Get 20 most recent tweets from user and delete all.
         """
-        tweets = self.tw_api.user_timeline(self.user_id)
+        tweets = self.tw_api.user_timeline(self.user_info["id"])
         tweet_ids = [status._json["id"] for status in tweets]
 
         for tw_id in tweet_ids:
@@ -52,7 +49,7 @@ def test_correct_keyword_no_time_room(l_bot, s_bot, keyword):
     """
     # user sends a tweet containing the correct keyword
     s_tweet = "test 1: {}".format(keyword)
-    s_bot.send_tweet(s_tweet)
+    s_bot.tw_api.update_status(s_tweet)
     time.sleep(5)
 
     # no action should be taken by l_bot, checking that no retweets sent
@@ -67,11 +64,14 @@ def test_correct_keyword_with_room_time(l_bot, s_bot, keyword):
     at the user who sent tweet. 
     """
     s_tweet = "test 2: {} @ 6pm room H112".format(keyword)
-    s_bot.send_tweet(s_tweet)
+    s_bot.tw_api.update_status(s_tweet)
     time.sleep(5)
 
     l_tweets = l_bot.get_tweets()
     assert (len(l_tweets) == 1), "not the one expected tweet"
+
+    mention = "@{}".format(s_bot.user_info["screen_name"])
+    assert (mention in l_tweets[0]._json["text"]), "correct user not mentioned"
 
     s_bot.clean_tweets()
     l_bot.clean_tweets()
@@ -86,6 +86,7 @@ def interface(keyword):
     """
     listen_bot = TwitterBot(listener)
     send_bot = TwitterBot(sender)
+
     # clean both twitter accounts
     listen_bot.clean_tweets()
     send_bot.clean_tweets()
