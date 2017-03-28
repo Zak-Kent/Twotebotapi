@@ -43,7 +43,6 @@ class StreamListener(tweepy.StreamListener):
 
         if status.user.id in self.ignore_users:
             print("tweet from bot, not real message. ignore")
-            return 
 
         # save user record to User model
         user, created = models.User.objects.get_or_create(id_str=str(status.user.id))
@@ -129,16 +128,15 @@ class Streambot:
 
         if len(val_check) == 2:
             # way to mention a user after a tweet is recieved
-            time = datetime.datetime.utcnow()
-            tweepy_send_tweet("@{} {} tweet recived".format(screen_name, time))
+            tweepy_send_tweet("@{} tweet recived".format(screen_name))
 
             # check config table to see if autosend on
-            config_obj = models.AppConfig.objects.latest("id")
-            approved = 1 if config_obj.auto_send else 0
+            # config_obj = models.AppConfig.objects.latest("id")
+            # approved = 1 if config_obj.auto_send else 0
 
-            # saving the tweet to the OutgoingTweet table triggers celery stuff
-            tweet_obj = models.Tweets(tweet=tweet, approved=approved)
-            tweet_obj.save()
+            # # saving the tweet to the OutgoingTweet table triggers celery stuff
+            # tweet_obj = models.Tweets(tweet=tweet, approved=approved)
+            # tweet_obj.save()
             
 
     def get_time_and_room(self, tweet):

@@ -32,7 +32,6 @@ def beat_tweet_scheduler():
         tweeter.apply_async((tweet.tweet, tweet.id), eta=tweet.scheduled_time)
         Tweets.objects.filter(pk=tweet.id).update(task_scheduled=True)
     print("beat scheduled")
-    return None
 
 # ----------------------------------------------------------------------------
 # need to link code below to twitter bot 
@@ -52,7 +51,6 @@ def tweeter(self, tweet, id):
 
     tweepy_send_tweet(tweet)
     print("tweet sent, indside tweeter : {}".format(tweet))
-    return None
 
 @app.task(
     bind=True,
@@ -70,8 +68,3 @@ def tweet_adder(self, tweet):
 
     tweet_obj = Tweets(tweet=tweet, approved=approved)
     tweet_obj.save()
-    return None
-
-
-    
-    

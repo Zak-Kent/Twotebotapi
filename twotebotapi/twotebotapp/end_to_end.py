@@ -8,47 +8,35 @@ from e2e_secrets import listener, sender
 
 class TwitterBot:
     """
-    Class that helps run the actions in an end to end test of the twitter bot
+    Class that helps run the actions in an end to end test of the twitter bot.
     """
     def __init__(self, account):
         self.tw_api = self.setup_tw_api(account)
-        self.user_id = self.get_user_id()
+        # get user id from Twitter
+        self.user_id = self.tw_api.me()._json["id"]
 
     def setup_tw_api(self, account):
         auth = tweepy.OAuthHandler(account["CONSUMER_KEY"], account["CONSUMER_SECRET"])
         auth.set_access_token(account["ACCESS_TOKEN"], account["ACCESS_TOKEN_SECRET"])
         return tweepy.API(auth)
 
-    def get_user_id(self):
-        return self.tw_api.me()._json["id"]
-
     def get_time(self):
         return datetime.datetime.utcnow()
-
-    def sleep(self):
-        time.sleep(3)
 
     def send_tweet(self, tweet):
         """
         Send tweet with unique datetime, write id to tweets list, and sleep.
         """
-        tweet += ": {}".format(self.get_time())
+        # tweet += ": {}".format(self.get_time())
         status = self.tw_api.update_status(tweet)
-        # self.tweets_list.append(status._json["id"])
-        self.sleep()
+        time.sleep(3)
 
-    # def clean_tweets(self):
-    #     """
-    #     Delete all tweets sent by account.
-    #     """
-    #     for status_id in self.tweets_list:
-    #         self.tw_api.destroy_status(status_id)
-
-    #     self.tweets_list = []
+    def get_tweets(self):
+        return self.tw_api.user_timeline(self.user_id)
 
     def clean_tweets(self):
         """
-        Get 20 most recent tweets from user and delete 
+        Get 20 most recent tweets from user and delete all.
         """
         tweets = self.tw_api.user_timeline(self.user_id)
         tweet_ids = [status._json["id"] for status in tweets]
@@ -57,49 +45,66 @@ class TwitterBot:
             self.tw_api.destroy_status(tw_id)
 
 
-def test_listening_on_stream_works(bot, keyword):
+def test_correct_keyword_no_time_room(l_bot, s_bot, keyword):
     """
-    Send a tweet with keyword stream is listening for, test that stream picks 
-    up tweet and saves it to Django db.
+    Send a tweet with keyword stream is listening for, but including a time
+    and room that would cause the bot to tweet with an @ mention.
     """
-    # tweet doesn't meet room schedule criteria so should only be saved 
-    # tweet = "fake tweet: {}".format(keyword)
-    # bot.send_tweet(tweet)
+    # user sends a tweet containing the correct keyword
+    s_tweet = "test 1: {}".format(keyword)
+    s_bot.send_tweet(s_tweet)
+    time.sleep(5)
 
-    # maybe drop all of this and test only from the perspective of someone 
-    # looking at twitter form the outside 
-    
+    # no action should be taken by l_bot, checking that no retweets sent
+    l_tweets = l_bot.get_tweets()
+    assert (len(l_tweets) == 0), "tweet where there shouldn't be"
 
+    s_bot.clean_tweets()
 
+def test_correct_keyword_with_room_time(l_bot, s_bot, keyword):
+    """
+    Send a tweet that should be picked up by streaming bot and tweeted back 
+    at the user who sent tweet. 
+    """
+    s_tweet = "test 2: {} @ 6pm room H112".format(keyword)
+    s_bot.send_tweet(s_tweet)
+    time.sleep(5)
 
+    l_tweets = l_bot.get_tweets()
+    assert (len(l_tweets) == 1), "not the one expected tweet"
+
+    s_bot.clean_tweets()
+    l_bot.clean_tweets()
 
 def interface(keyword):
     """
-    interface that starts the end to end testing
-    """
-    bot = TwitterBot(listener)
-    # bot2 = TwitterBot(sender)
+    In order for these tests to run correctly they will clear the test
+    twitter accounts of all messages at the start and in between tests.
 
-    # bot.send_tweet("send 3")
-    # bot.send_tweet("send 3")
-    # bot.send_tweet("send 3")
-    # bot.clean_tweets()
+    The twitter bot must be running and listening for a unique keyword.
+    This keyword should be passed in as a command line arg to this script.
+    """
+    listen_bot = TwitterBot(listener)
+    send_bot = TwitterBot(sender)
+    # clean both twitter accounts
+    listen_bot.clean_tweets()
+    send_bot.clean_tweets()
+
+    #test 1:
+    test_correct_keyword_no_time_room(listen_bot, send_bot, keyword)
+
+    #test 2: 
+    test_correct_keyword_with_room_time(listen_bot, send_bot, keyword)
+
 
     print(keyword)
-    print(bot.user_id)
-
-    bot.clean_tweets()
-
-    # test_listening_on_stream_works(1, 4)
-
-    return 
 
 
 def cli_interface():
     """
     wrapper_cli method that interfaces from commandline to function space
     call the script with: 
-    python end_to_end.py <keyword: Should be keyword stream is filtering on> 
+    python end_to_end.py <keyword: Should be keyword stream is filtering on>
     """
     try:
         keyword = sys.argv[1]
