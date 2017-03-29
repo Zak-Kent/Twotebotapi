@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import ArrayField
 from datetime import datetime, timedelta
 
 
@@ -44,11 +44,10 @@ class Tweets(BaseModel):
             self.scheduled_time = eta
         super(Tweets, self).save(*args, **kwargs)
 
-
 class AppConfig(BaseModel):
     auto_send = models.BooleanField()
     default_send_interval = models.IntegerField(default=15)
-    ignore_users = JSONField(null=True, blank=True)
+    ignore_users = ArrayField(models.BigIntegerField())
 
 
 # ----------------------------------------------------------------------

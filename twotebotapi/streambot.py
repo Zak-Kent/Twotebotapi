@@ -7,7 +7,7 @@ import os
 import datetime
 import django
 
-# need to point Django at the right settings module access pieces of app
+# need to point Django at the right settings to access pieces of app
 os.environ["DJANGO_SETTINGS_MODULE"] = "twotebotapi.settings"
 django.setup()
 
@@ -23,31 +23,37 @@ class StreamListener(tweepy.StreamListener):
     """
 
     def __init__(self, streambot, api=None):
-        # needed to override __init__ to get ref to Streambot
-        # with ref the method retweet_logic can be used in on_status
         self.api = api or API()
+        # needed ref to streambot so method can be called there
         self.streambot = streambot
-
-        # the first item in this list is the bot's own Twitter id
-        # needed to make sure bot doesn't take action on own tweets
-        self.ignore_users = [841013993602863104,]
-
+        self.tw_bot_id = 841013993602863104
+        self.ignored_users = [self.tw_bot_id, ]
+        
     def update_ignore_users(self):
         """
-        Check app config table to see if update to ignore_users if so add user
+        Check app config table to get list of ignored twitter ids, ignore bot
         """
         config_obj = models.AppConfig.objects.latest("id")
-        ignore = [int(item["id"]) for item in config_obj.ignore_users]
+        ignore_list = [tw_id for tw_id in config_obj.ignore_users]
 
-        self.ignore_users.append(ignore)
+        if ignore_list == []:
+            return 
+        else: 
+            ignore_list.append(self.tw_bot_id)
+            self.ignored_users = ignore_list
+
+        print("*" * 40)
+        print(self.ignored_users)
+        print("*" * 40)
 
     def on_status(self, status):
 
         # call to check for ignored users from AppConfig
         self.update_ignore_users()
 
-        if status.user.id in self.ignore_users:
-            print("tweet from bot, not real message. ignore")
+        if status.user.id in self.ignored_users:
+            print("tweet from account on ignore list")
+            return
 
         # save user record to User model
         user, created = models.User.objects.get_or_create(id_str=str(status.user.id))

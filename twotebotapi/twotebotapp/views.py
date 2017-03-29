@@ -69,17 +69,11 @@ class RetrieveDestroyTweets(generics.RetrieveDestroyAPIView):
 
 # ------------------------------------------------------------------
 class ListUser(generics.ListAPIView):
-    """
-    
-    """
     queryset = models.User.objects.all()
     serializer_class = serializers.UserSerializer
 
 
 class ListStreamedTweet(generics.ListAPIView):
-    """
-    
-    """
     queryset = models.StreamedTweet.objects.all()
     serializer_class = serializers.StreamedTweetSerializer
 

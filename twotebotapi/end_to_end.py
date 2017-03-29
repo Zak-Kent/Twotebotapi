@@ -1,23 +1,20 @@
 import datetime
+import django
+from django.forms.models import model_to_dict
 import sys
 import time
 import tweepy
 import os
-import django
-from django.forms.models import model_to_dict
+import requests
 
-# need to point Django at the right settings module access pieces of app
+# need to point Django at the right settings to access pieces of app
 os.environ["DJANGO_SETTINGS_MODULE"] = "twotebotapi.settings"
 django.setup()
 
-
-
-from twotebotapp.models import Tweets
+from twotebotapp.models import Tweets, AppConfig
 from twotebotapp.serializers import TweetSerializer
 from twotebotapp.secrets import listener, sender 
 
-test = Tweets.objects.latest("id")
-print(model_to_dict(test))
 
 class TwitterBot:
     """
@@ -81,7 +78,7 @@ def test_correct_keyword_with_room_time(l_bot, s_bot, keyword):
     time.sleep(5)
 
     l_tweets = l_bot.get_tweets()
-    assert (len(l_tweets) == 1), "not the one expected tweet"
+    assert (len(l_tweets) == 1),"one tweet expected: {} found".format(len(l_tweets))
 
     mention = "@{}".format(s_bot.user_info["screen_name"])
     assert (mention in l_tweets[0]._json["text"]), "correct user not mentioned"
@@ -89,13 +86,49 @@ def test_correct_keyword_with_room_time(l_bot, s_bot, keyword):
     s_bot.clean_tweets()
     l_bot.clean_tweets()
 
+def test_adding_bot_to_ignore_list_works_as_expected(l_bot, s_bot, keyword):
+    """
+    Update ignore list with sending bot's id and then send tweet that should 
+    be retweeted, test that listener correctly ignores tweet. 
+    """
+    # create a new AppConifg model instance with s_bot id in ignore_users
+    start_conf = model_to_dict(AppConfig.objects.latest("id"))
+    test_conf = {
+            "auto_send": start_conf["auto_send"],
+            "default_send_interval": start_conf["default_send_interval"],
+            "ignore_users": [s_bot.user_info["id"]]
+            }
+    AppConfig.objects.create(**test_conf)
+
+    # send a tweet from s_bot that should get an @ mention
+    s_tweet = "test 3: {} @ 6pm room H112".format(keyword)
+    s_bot.tw_api.update_status(s_tweet)
+    time.sleep(5)
+
+    # check that tweet wasn't sent form listen bot
+    l_tweets = l_bot.get_tweets()
+    assert (len(l_tweets) == 0), "tweet where there shouldn't be"
+
+    # set AppConfig latest record back to starting state with only id changed
+    test_conf["ignore_users"] = []
+    AppConfig.objects.create(**test_conf)
+
+    # clean twitter accounts 
+    s_bot.clean_tweets()
+    l_bot.clean_tweets()
+
+
 def interface(keyword):
     """
     In order for these tests to run correctly they will clear the test
-    twitter accounts of all messages at the start and in between tests.
+    twitter accounts of all messages at the start and inbetween tests.
 
     The twitter bot must be running and listening for a unique keyword.
     This keyword should be passed in as a command line arg to this script.
+
+    The AppConfig table also needs to have ignore_users set to []
+    The bot also maintains the state of ignored users so it must be 
+    restarted in between tests. 
     """
     listen_bot = TwitterBot(listener)
     send_bot = TwitterBot(sender)
@@ -109,6 +142,9 @@ def interface(keyword):
 
     #test 2: 
     test_correct_keyword_with_room_time(listen_bot, send_bot, keyword)
+
+    #test 3:
+    test_adding_bot_to_ignore_list_works_as_expected(listen_bot, send_bot, keyword)
 
 
     print(keyword)
