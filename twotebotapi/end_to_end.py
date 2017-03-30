@@ -54,10 +54,10 @@ class TwitterBot:
 
 def test_correct_keyword_no_time_room(l_bot, s_bot, keyword):
     """
-    Send a tweet with keyword stream is listening for, but including a time
-    and room that would cause the bot to tweet with an @ mention.
+    Send a tweet with keyword stream is listening for, but not including 
+    a time and room. Should not get @ mention.
     """
-    # user sends a tweet containing the correct keyword
+    # user sends a tweet containing the correct keyword but not 
     s_tweet = "test 1: {}".format(keyword)
     s_bot.tw_api.update_status(s_tweet)
     time.sleep(5)
@@ -70,8 +70,7 @@ def test_correct_keyword_no_time_room(l_bot, s_bot, keyword):
 
 def test_correct_keyword_with_room_time(l_bot, s_bot, keyword):
     """
-    Send a tweet that should be picked up by streaming bot and tweeted back 
-    at the user who sent tweet. 
+    Send a tweet with room and time that should get @ mention. 
     """
     s_tweet = "test 2: {} @ 6pm room H112".format(keyword)
     s_bot.tw_api.update_status(s_tweet)
@@ -92,6 +91,7 @@ def test_adding_bot_to_ignore_list_works_as_expected(l_bot, s_bot, keyword):
     be retweeted, test that listener correctly ignores tweet. 
     """
     # create a new AppConifg model instance with s_bot id in ignore_users
+    # app_config should still be set to auto_send: false
     start_conf = model_to_dict(AppConfig.objects.latest("id"))
     test_conf = {
             "auto_send": start_conf["auto_send"],
@@ -117,6 +117,32 @@ def test_adding_bot_to_ignore_list_works_as_expected(l_bot, s_bot, keyword):
     s_bot.clean_tweets()
     l_bot.clean_tweets()
 
+def test_valid_tweet_causes_bot_to_send_retweet_about_event(l_bot, s_bot, keyword):
+    """
+    This test requires the celery and rabbitmq to be running in the background
+    and will send a retweet after the delay time. 
+    """
+    # turn auto_send on, this will cause a valid tweet to be retweeted
+    # a minute after it is recived. 
+    test_conf = {
+        "auto_send": 1,
+        "default_send_interval": 1,
+        "ignore_users": []
+        }
+    AppConfig.objects.create(**test_conf)
+
+    # send a tweet from s_bot that should get an @ mention and retweet 1 min later
+    s_tweet = "test 4: {} @ 6pm room H112".format(keyword)
+    s_bot.tw_api.update_status(s_tweet)
+    print("sleeping to wait for retweet")
+    time.sleep(80)
+
+    # check that two tweets have been sent from bot's account
+    l_tweets = l_bot.get_tweets()
+    assert (len(l_tweets) == 2),"two tweet expected: {} found".format(len(l_tweets))
+
+    s_bot.clean_tweets()
+    l_bot.clean_tweets()
 
 def interface(keyword):
     """
@@ -126,9 +152,10 @@ def interface(keyword):
     The twitter bot must be running and listening for a unique keyword.
     This keyword should be passed in as a command line arg to this script.
 
-    The AppConfig table also needs to have ignore_users set to []
-    The bot also maintains the state of ignored users so it must be 
-    restarted in between tests. 
+    Celery and Rabbitmq should also be running as normal. 
+
+    The bot maintains the state of ignored users so it must be 
+    restarted if running this script more than once. 
     """
     listen_bot = TwitterBot(listener)
     send_bot = TwitterBot(sender)
@@ -136,6 +163,14 @@ def interface(keyword):
     # clean both twitter accounts
     listen_bot.clean_tweets()
     send_bot.clean_tweets()
+
+    # setup latest Appconfig object to not auto_send tweets unitl needed
+    test_conf = {
+        "auto_send": 0,
+        "default_send_interval": 1,
+        "ignore_users": []
+        }
+    AppConfig.objects.create(**test_conf)
 
     #test 1:
     test_correct_keyword_no_time_room(listen_bot, send_bot, keyword)
@@ -146,9 +181,8 @@ def interface(keyword):
     #test 3:
     test_adding_bot_to_ignore_list_works_as_expected(listen_bot, send_bot, keyword)
 
-
-    print(keyword)
-
+    #test 4: 
+    test_valid_tweet_causes_bot_to_send_retweet_about_event(listen_bot, send_bot, keyword)
 
 def cli_interface():
     """

@@ -35,16 +35,8 @@ class StreamListener(tweepy.StreamListener):
         """
         config_obj = models.AppConfig.objects.latest("id")
         ignore_list = [tw_id for tw_id in config_obj.ignore_users]
-
-        if ignore_list == []:
-            return 
-        else: 
-            ignore_list.append(self.tw_bot_id)
-            self.ignored_users = ignore_list
-
-        print("*" * 40)
-        print(self.ignored_users)
-        print("*" * 40)
+        ignore_list.append(self.tw_bot_id)
+        self.ignored_users = ignore_list
 
     def on_status(self, status):
 
@@ -141,13 +133,13 @@ class Streambot:
             # way to mention a user after a tweet is recieved
             tweepy_send_tweet("@{} tweet recived".format(screen_name))
 
-            # check config table to see if autosend on
-            # config_obj = models.AppConfig.objects.latest("id")
-            # approved = 1 if config_obj.auto_send else 0
+            #check config table to see if autosend on
+            config_obj = models.AppConfig.objects.latest("id")
+            approved = 1 if config_obj.auto_send else 0
 
-            # # saving the tweet to the OutgoingTweet table triggers celery stuff
-            # tweet_obj = models.Tweets(tweet=tweet, approved=approved)
-            # tweet_obj.save()
+            # saving the tweet to the OutgoingTweet table triggers celery stuff
+            tweet_obj = models.Tweets(tweet=tweet, approved=approved)
+            tweet_obj.save()
             
     def get_time_and_room(self, tweet):
         """
