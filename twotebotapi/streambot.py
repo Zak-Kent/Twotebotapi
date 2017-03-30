@@ -21,7 +21,6 @@ class StreamListener(tweepy.StreamListener):
     """
     Object that defines the callback actions passed to tweepy.Stream 
     """
-
     def __init__(self, streambot, api=None):
         self.api = api or API()
         # needed ref to streambot so method can be called there
@@ -39,7 +38,6 @@ class StreamListener(tweepy.StreamListener):
         self.ignored_users = ignore_list
 
     def on_status(self, status):
-
         # call to check for ignored users from AppConfig
         self.update_ignore_users()
 
@@ -131,7 +129,9 @@ class Streambot:
 
         if len(val_check) == 2:
             # way to mention a user after a tweet is recieved
-            tweepy_send_tweet("@{} tweet recived".format(screen_name))
+            tweepy_send_tweet(
+                "@{} We saw your openspaces tweet!".format(screen_name)
+                )
 
             #check config table to see if autosend on
             config_obj = models.AppConfig.objects.latest("id")

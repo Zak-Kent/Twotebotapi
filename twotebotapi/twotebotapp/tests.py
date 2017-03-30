@@ -26,13 +26,13 @@ class TestOutBoundTweetsEndpoint(TestCase):
 
     def test_filter_tweets_by_approved_field(self):
         json_response = self.api_call("/twitter/tweets/?approved=1")
-        # 6 tweets in fixture are approved 
-        self.assertEqual(len(json_response), 6)
+        # 3 tweets in fixture are approved 
+        self.assertEqual(len(json_response), 3)
 
     def test_filter_tweets_waiting_to_be_sent(self):
         json_response = self.api_call("/twitter/tweets/?pending=True")
-        # 4 pending tweets in fixture
-        self.assertEqual(len(json_response), 4)
+        # 2 pending tweets in fixture
+        self.assertEqual(len(json_response), 2)
 
     def test_filtering_tweets_with_both_query_params(self):
         json_one = self.api_call("/twitter/tweets/?pending=True&approved=0")
@@ -49,7 +49,8 @@ class TestTweetModelSaveMethod(TestCase):
     """
 
     def setUp(self):
-        AppConfig.objects.create(auto_send=True, default_send_interval=1)
+        AppConfig.objects.create(auto_send=True, 
+                                default_send_interval=1, ignore_users=[])
 
     def test_approved_tweet_gets_scheduled_time_auto_calculated(self):
         Tweets.objects.create(tweet="test tweet", approved=1)
@@ -83,40 +84,45 @@ class TestTweetModelSaveMethod(TestCase):
 class TestCeleryTasks(TestCase):
     """
     Check that the celery tasks perform as expected in isolation
+
+    The tests below need 'CELERY_ALWAYS_EAGER = True' to be set in 
+    the project's settings.py file in order for the tests to run properly
+
+    Celery and Rabbitmq must also be running 
     """
 
-    def setUp(self):
-        AppConfig.objects.create(auto_send=True, default_send_interval=1)
+    # def setUp(self):
+    #     AppConfig.objects.create(auto_send=True, default_send_interval=1)
 
-    @freeze_time("2017-08-05")
-    def test_beat_tweet_scheduler_schedules_correct_tweets(self):
-        """
-        Test that a tweet scheduled to be sent within the beat_tweet_scheduler
-        time range is scheduled and added its task_scheduled flag is set to True
-        """
-        Tweets.objects.create(tweet="test time tweet", approved=1)
+    # @freeze_time("2017-08-05")
+    # def test_beat_tweet_scheduler_schedules_correct_tweets(self):
+    #     """
+    #     Test that a tweet scheduled to be sent within the beat_tweet_scheduler
+    #     time range is scheduled and added its task_scheduled flag is set to True
+    #     """
+    #     Tweets.objects.create(tweet="test time tweet", approved=1)
 
-        # task is wating to be scheduled in DB so task_scheduled flag = False
-        pre_scheduled = Tweets.objects.get(tweet="test time tweet")
-        self.assertEqual(pre_scheduled.task_scheduled, False)
+    #     # task is wating to be scheduled in DB so task_scheduled flag = False
+    #     pre_scheduled = Tweets.objects.get(tweet="test time tweet")
+    #     self.assertEqual(pre_scheduled.task_scheduled, False)
 
-        beat_tweet_scheduler()
+    #     beat_tweet_scheduler()
 
-        post_scheduled = Tweets.objects.get(tweet="test time tweet")
-        self.assertEqual(post_scheduled.task_scheduled, True)
+    #     post_scheduled = Tweets.objects.get(tweet="test time tweet")
+    #     self.assertEqual(post_scheduled.task_scheduled, True)
 
-    @freeze_time("2017-08-05")
-    def test_tweeter_sends_tweet_and_sets_field(self):
-        """
-        Test that tweeter task sends tweet and writes sent time to Tweet obj
-        """
-        # create tweet to be sent
-        outgoing = Tweets.objects.create(tweet="tweet in tweeter", approved=1, 
-                                         task_scheduled=True)
-        self.assertEqual(bool(outgoing.sent_time), False)
+    # @freeze_time("2017-08-05")
+    # def test_tweeter_sends_tweet_and_sets_field(self):
+    #     """
+    #     Test that tweeter task sends tweet and writes sent time to Tweet obj
+    #     """
+    #     # create tweet to be sent
+    #     outgoing = Tweets.objects.create(tweet="tweet in tweeter", approved=1, 
+    #                                      task_scheduled=True)
+    #     self.assertEqual(bool(outgoing.sent_time), False)
 
-        tweeter(outgoing.tweet, outgoing.id)
+    #     tweeter(outgoing.tweet, outgoing.id)
 
-        sent = Tweets.objects.get(pk=outgoing.id)
-        self.assertEqual(bool(sent.sent_time), True)
+    #     sent = Tweets.objects.get(pk=outgoing.id)
+    #     self.assertEqual(bool(sent.sent_time), True)
 
