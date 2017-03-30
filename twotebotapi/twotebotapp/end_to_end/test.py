@@ -1,3 +1,4 @@
+from django.forms.models import model_to_dict
 from django.test import TestCase
 import time
 import tweepy
@@ -62,6 +63,13 @@ class TestEndToEnd(TestCase):
         "ignore_users": []
         }
         AppConfig.objects.create(**test_conf)
+        print("setup run")
+
+    def tearDown(self):
+        print("^" * 40)
+        self.s_bot.clean_tweets()
+        self.l_bot.clean_tweets()
+        print("tearDown run")
 
     def test_correct_keyword_no_time_room(self):
         """
@@ -71,13 +79,11 @@ class TestEndToEnd(TestCase):
         # user sends a tweet containing the correct keyword but not 
         s_tweet = "test 1: {}".format(self.keyword)
         self.s_bot.tw_api.update_status(s_tweet)
-        time.sleep(5)
+        time.sleep(10)
 
         # no action should be taken by l_bot, checking that no retweets sent
         l_tweets = self.l_bot.get_tweets()
         self.assertEqual(len(l_tweets), 0)
-
-        self.s_bot.clean_tweets()
 
     def test_correct_keyword_with_room_time(self):
         """
@@ -85,7 +91,7 @@ class TestEndToEnd(TestCase):
         """
         s_tweet = "test 2: {} @ 6pm room H112".format(self.keyword)
         self.s_bot.tw_api.update_status(s_tweet)
-        time.sleep(5)
+        time.sleep(10)
 
         l_tweets = self.l_bot.get_tweets()
         self.assertEqual(len(l_tweets), 1)
@@ -93,6 +99,6 @@ class TestEndToEnd(TestCase):
         mention = "@{}".format(self.s_bot.user_info["screen_name"])
         self.assertIn(mention, l_tweets[0]._json["text"])
 
-        self.s_bot.clean_tweets()
-        self.l_bot.clean_tweets()
-
+    # problem with two other tests it that the script which is running 
+    # streambot is pointing at the real AppConfig table not the testing
+    # one so you can't change the values inside a test to check all parts
