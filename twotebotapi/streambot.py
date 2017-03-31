@@ -5,6 +5,7 @@ from nltk import word_tokenize
 import re
 import os
 import datetime
+from dateutil.parser import parse
 import django
 
 # need to point Django at the right settings to access pieces of app
@@ -74,6 +75,7 @@ class StreamListener(tweepy.StreamListener):
         
     def on_error(self, status_code):
         if status_code == 420:
+            print(status_code, "error with tweepy")
             return False
 
 
@@ -116,6 +118,41 @@ class Streambot:
         stream = tweepy.Stream(auth=self.api.auth, listener=self.stream_listener)
         stream.filter(track=search_list)
 
+    def schedule_tweets(self, talk_time, tweet, num_reminders):
+        """
+        Take tweet and datetime, schedule reminder tweets in 15 min intervals 
+        """
+        #check config table to see if autosend on
+        config_obj = models.AppConfig.objects.latest("id")
+        approved = 1 if config_obj.auto_send else 0
+
+        talk_time = parse(talk_time)
+        print("^" * 30)
+        print(talk_time)
+        print("^" * 30)
+
+        interval = 1
+        min_reminders = range(interval,(num_reminders*interval+1),interval)
+        print(min_reminders)
+
+        for idx, mins in enumerate(min_reminders):
+            remind_time = talk_time - datetime.timedelta(minutes=mins)
+            print(remind_time)
+
+            extra_char = "!" * idx
+            message = "In {} mins{} RT: ".format(mins, extra_char)
+            print(message)
+
+            if len(tweet) + len(message) <= 140:
+                retweet = message + tweet
+            else: 
+                retweet = tweet
+
+            # saving the tweet to the OutgoingTweet table triggers celery stuff
+            tweet_obj = models.Tweets(tweet=retweet, 
+                                approved=approved, scheduled_time=remind_time)
+            tweet_obj.save()
+
     def retweet_logic(self, tweet, tweet_id, screen_name):
         """
         Use SUTime to try to parse a datetime out of a tweet, if successful
@@ -124,22 +161,23 @@ class Streambot:
         print(tweet, tweet_id)
         time_room = self.get_time_and_room(tweet)
 
+        print("*" * 35)
+        print(time_room)
+        print(time_room["date"][0])
+        print("*" * 35)
+
         # check to make sure both time and room extracted and only one val for each
         val_check = [val for val in time_room.values() if val != [] and len(val) == 1]
 
         if len(val_check) == 2:
             # way to mention a user after a tweet is recieved
+            time_stamp = datetime.datetime.utcnow()
             tweepy_send_tweet(
-                "@{} We saw your openspaces tweet!".format(screen_name)
+                "@{} We saw your openspaces tweet!{}".format(screen_name, time_stamp)
                 )
 
-            #check config table to see if autosend on
-            config_obj = models.AppConfig.objects.latest("id")
-            approved = 1 if config_obj.auto_send else 0
-
-            # saving the tweet to the OutgoingTweet table triggers celery stuff
-            tweet_obj = models.Tweets(tweet=tweet, approved=approved)
-            tweet_obj.save()
+            num_reminders = 2
+            self.schedule_tweets(time_room["date"][0], tweet, num_reminders)
             
     def get_time_and_room(self, tweet):
         """

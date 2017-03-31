@@ -57,6 +57,8 @@ class TestEndToEnd(TestCase):
         cls.l_bot = TwitterBot(listener)
 
     def setUp(self):
+        # this setup method isn't effecting what the bot is looking
+        # at because it lives outside of the test. 
         test_conf = {
         "auto_send": 0,
         "default_send_interval": 1,
