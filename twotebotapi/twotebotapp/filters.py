@@ -13,3 +13,4 @@ class TweetFilter(django_filters.FilterSet):
     class Meta:
         model = Tweets
         fields = ['approved',]
+

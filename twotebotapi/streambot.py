@@ -4,9 +4,11 @@ from sutime import SUTime
 from nltk import word_tokenize
 import re
 import os
-import datetime
+from datetime import datetime, timedelta
 from dateutil.parser import parse
 import django
+
+import pytz
 
 # need to point Django at the right settings to access pieces of app
 os.environ["DJANGO_SETTINGS_MODULE"] = "twotebotapi.settings"
@@ -93,8 +95,9 @@ class Streambot:
     def __init__(self):
         self.api = self.setup_auth()
         self.stream_listener = StreamListener(self)
+        self.tz = pytz.timezone('US/Pacific')
 
-        jar_files = os.path.join(BASE_DIR, "python-sutime/jars") 
+        jar_files = os.path.join(BASE_DIR, "python-sutime", "jars") 
         self.sutime = SUTime(jars=jar_files, mark_time_ranges=True)
 
     def setup_auth(self):
@@ -118,38 +121,52 @@ class Streambot:
         stream = tweepy.Stream(auth=self.api.auth, listener=self.stream_listener)
         stream.filter(track=search_list)
 
-    def schedule_tweets(self, talk_time, tweet, num_reminders):
+    def convert_to_utc(self, talk_time):
         """
-        Take tweet and datetime, schedule reminder tweets in 15 min intervals 
+        Convert the datetime string we get from SUTime to utcnow
         """
-        #check config table to see if autosend on
+        # get correct local year, month, dat
+        local_date = datetime.now(self.tz)
+        local_date_str = datetime.strftime(local_date, "%Y %m %d")
+        year, month, day = local_date_str.split(" ")
+
+        # get SUTime parsed talk time and extract hours, mins
+        dt_obj = parse(talk_time)
+        local_time_str = datetime.strftime(dt_obj, "%H %M")
+        hours, mins = local_time_str.split(" ")
+        
+        # build up correct datetime obj, normalize & localize, switch to utc 
+        correct_dt = datetime(int(year), int(month), int(day), int(hours), int(mins))
+        tz_aware_local = self.tz.normalize(self.tz.localize(correct_dt))
+        local_as_utc = tz_aware_local.astimezone(pytz.utc)
+        
+        return local_as_utc
+
+    def schedule_tweets(self, screen_name, tweet, tweet_id, talk_time):
+        """
+        Take tweet and datetime, schedule num of reminder tweets at set intervals 
+        """
+        # check config table to see if autosend on
         config_obj = models.AppConfig.objects.latest("id")
         approved = 1 if config_obj.auto_send else 0
 
-        talk_time = parse(talk_time)
-        print("^" * 30)
-        print(talk_time)
-        print("^" * 30)
+        tweet_url = "https://twitter.com/{name}/status/{tweet_id}"
+        embeded_tweet = tweet_url.format(name=screen_name, tweet_id=tweet_id)
 
+        # set num of reminder tweets and interval in mins that tweets sent
+        # num_tweets = 2 & interval = 15 sends 2 tweets 30 & 15 mins before 
+        num_tweets = 2
         interval = 1
-        min_reminders = range(interval,(num_reminders*interval+1),interval)
-        print(min_reminders)
 
-        for idx, mins in enumerate(min_reminders):
-            remind_time = talk_time - datetime.timedelta(minutes=mins)
-            print(remind_time)
+        for  mins in range(interval,(num_tweets*interval+1), interval):
+            remind_time = talk_time - timedelta(minutes=mins)
 
-            extra_char = "!" * idx
-            message = "In {} mins{} RT: ".format(mins, extra_char)
-            print(message)
+            message = "Coming up in {} minutes! {}".format(mins, embeded_tweet)
 
-            if len(tweet) + len(message) <= 140:
-                retweet = message + tweet
-            else: 
-                retweet = tweet
+            print("message should be saved!!!")
 
             # saving the tweet to the OutgoingTweet table triggers celery stuff
-            tweet_obj = models.Tweets(tweet=retweet, 
+            tweet_obj = models.Tweets(tweet=message, 
                                 approved=approved, scheduled_time=remind_time)
             tweet_obj.save()
 
@@ -161,23 +178,24 @@ class Streambot:
         print(tweet, tweet_id)
         time_room = self.get_time_and_room(tweet)
 
-        print("*" * 35)
-        print(time_room)
-        print(time_room["date"][0])
-        print("*" * 35)
-
         # check to make sure both time and room extracted and only one val for each
-        val_check = [val for val in time_room.values() if val != [] and len(val) == 1]
+        val_check = [val for val in time_room.values() if len(val) == 1]
 
         if len(val_check) == 2:
-            # way to mention a user after a tweet is recieved
-            time_stamp = datetime.datetime.utcnow()
-            tweepy_send_tweet(
-                "@{} We saw your openspaces tweet!{}".format(screen_name, time_stamp)
-                )
+            # way to mention a user after a valid tweet is recieved
+            # time_stamp = datetime.datetime.utcnow()
 
-            num_reminders = 2
-            self.schedule_tweets(time_room["date"][0], tweet, num_reminders)
+            # mention = "@{} We saw your openspaces tweet!{}".format(screen_name, time_stamp)
+
+            # self.api.update_status(status=mention)
+
+            # need to make time from SUTime match time Django is using
+            sutime_stuff = time_room["date"][0]
+            print("sutime_stuff: {}".format(sutime_stuff))
+            talk_time = self.convert_to_utc(time_room["date"][0])
+            print("reult from convet to utc: {}".format(talk_time))
+
+            self.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
             
     def get_time_and_room(self, tweet):
         """

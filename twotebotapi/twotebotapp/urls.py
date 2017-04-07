@@ -8,4 +8,5 @@ urlpatterns = [
     url(r'^destroy/(?P<pk>[0-9]+)$', views.RetrieveDestroyTweets.as_view()),
     url(r'^users/$', views.ListUser.as_view()),
     url(r'^stream/$', views.ListStreamedTweet.as_view()),
+    url(r'^filter/$', views.CheckFilter.as_view()),
 ]

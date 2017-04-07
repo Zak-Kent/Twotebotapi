@@ -3,6 +3,7 @@ from rest_framework import generics
 from . import serializers
 from . import models
 from . import filters 
+from . import my_filter
 
 
 class RetriveUpdateOutgoingTweets(generics.RetrieveUpdateAPIView):
@@ -78,7 +79,13 @@ class ListStreamedTweet(generics.ListAPIView):
     serializer_class = serializers.StreamedTweetSerializer
 
 
+# ------------------------------------------------------------------
+# fake endpoint used to test filter setup
 
+class CheckFilter(generics.ListAPIView):
+    queryset = models.Tweets.objects.all()
+    serializer_class = serializers.TweetSerializer
+    filter_class = my_filter.OutgoingTweetFilter
 
 
 
