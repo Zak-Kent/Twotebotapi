@@ -85,6 +85,8 @@ class BaseStreamBot:
     """
     Base class with functionality not related to Tweepy and SUTime 
     """
+    def __init__(self):
+        self.tz = pytz.timezone('US/Pacific')
 
     def schedule_tweets(self, screen_name, tweet, tweet_id, talk_time):
         """
@@ -114,7 +116,7 @@ class BaseStreamBot:
                                 approved=approved, scheduled_time=remind_time)
             tweet_obj.save()
 
-    def convert_to_utc(self, talk_time):
+    def convert_to_utc(self, talk_time, tz):
         """
         Convert the datetime string we get from SUTime to utcnow
         """
@@ -150,7 +152,7 @@ class Streambot(BaseStreamBot):
     def __init__(self):
         self.api = self.setup_auth()
         self.stream_listener = StreamListener(self)
-        self.tz = pytz.timezone('US/Pacific')
+        # self.tz = pytz.timezone('US/Pacific')
 
         jar_files = os.path.join(BASE_DIR, "python-sutime", "jars") 
         self.sutime = SUTime(jars=jar_files, mark_time_ranges=True)
@@ -198,7 +200,7 @@ class Streambot(BaseStreamBot):
             # need to make time from SUTime match time Django is using
             sutime_stuff = time_room["date"][0]
             print("sutime_stuff: {}".format(sutime_stuff))
-            talk_time = self.convert_to_utc(time_room["date"][0])
+            talk_time = self.convert_to_utc(time_room["date"][0], self.tz)
             print("reult from convet to utc: {}".format(talk_time))
 
             test = self.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
