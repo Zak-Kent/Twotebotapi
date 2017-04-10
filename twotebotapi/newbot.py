@@ -17,7 +17,6 @@ django.setup()
 import twotebotapp.secrets as s
 from twotebotapp import models
 from twotebotapi.settings import BASE_DIR
-from twotebotapp.tweepy_connect import tweepy_send_tweet
 
 
 class StreamListener(tweepy.StreamListener):
