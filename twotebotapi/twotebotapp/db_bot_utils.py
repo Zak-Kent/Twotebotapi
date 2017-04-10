@@ -6,12 +6,11 @@ def get_ignored_users():
     """
     config_obj = models.AppConfig.objects.latest("id")
     ignore_list = [tw_id for tw_id in config_obj.ignore_users]
-    #ignore_list.append(self.tw_bot_id)
     return ignore_list
 
-def get_or_create_user(status):
+def get_or_create_user_and_tweet(status):
     """
-    Take a status from twitter and either create or update info in out db
+    Take a status from twitter and either create or update info for tweet & user
     """
     user, created = models.User.objects.get_or_create(id_str=str(status.user.id))
     user.verified = status.user.verified  # v4
@@ -27,10 +26,6 @@ def get_or_create_user(status):
     user.favourites_count = status.user.favourites_count
     user.save()
 
-def get_or_create_tweet(status):
-    """
-    Take a status from twitter and either create or update a tweet record
-    """
     # save tweet record to StreamedTweet model
     tweet_record, created = models.StreamedTweet.objects.get_or_create(id_str=status.id_str)
     tweet_record.id_str = status.id_str

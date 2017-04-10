@@ -14,6 +14,7 @@ import pytz
 os.environ["DJANGO_SETTINGS_MODULE"] = "twotebotapi.settings"
 django.setup()
 
+from twotebotapp import db_bot_utils
 import twotebotapp.secrets as s
 from twotebotapp import models
 from twotebotapi.settings import BASE_DIR
@@ -34,8 +35,7 @@ class StreamListener(tweepy.StreamListener):
         """
         Check app config table to get list of ignored twitter ids, ignore bot
         """
-        config_obj = models.AppConfig.objects.latest("id")
-        ignore_list = [tw_id for tw_id in config_obj.ignore_users]
+        ignore_list = db_bot_utils.get_ignored_users()
         ignore_list.append(self.tw_bot_id)
         self.ignored_users = ignore_list
 
@@ -47,32 +47,12 @@ class StreamListener(tweepy.StreamListener):
             print("tweet from account on ignore list")
             return
 
-        # save user record to User model
-        user, created = models.User.objects.get_or_create(id_str=str(status.user.id))
-        user.verified = status.user.verified  # v4
-        user.time_zone = status.user.time_zone  # v4
-        user.utc_offset = status.user.utc_offset  # -28800 (v4)
-        user.protected = status.user.protected  # v4
-        user.location = status.user.location  # Houston, TX  (v4)
-        user.lang = status.user.lang  # en  (v4)
-        user.screen_name = status.user.screen_name
-        user.followers_count = status.user.followers_count
-        user.statuses_count = status.user.statuses_count
-        user.friends_count = status.user.friends_count
-        user.favourites_count = status.user.favourites_count
-        user.save()
-
-        # save tweet record to StreamedTweet model
-        tweet_record, created = models.StreamedTweet.objects.get_or_create(id_str=status.id_str)
-        tweet_record.id_str = status.id_str
-        tweet_record.user = user
-        tweet_record.favorite_count = status.favorite_count
-        tweet_record.text = status.text
-        tweet_record.source = status.source
-        tweet_record.save()    
+        # create or update user and tweet records in Django models
+        db_bot_utils.get_or_create_user_and_tweet(status)
 
         # trigger time parsing with SUTime inside streambot
-        self.streambot.retweet_logic(status.text, status.id_str, user.screen_name)  
+        self.streambot.retweet_logic(status.text, status.id_str, 
+                                        status.user.screen_name)  
         
     def on_error(self, status_code):
         if status_code == 420:
@@ -84,16 +64,13 @@ class BaseStreamBot:
     """
     Base class with functionality not related to Tweepy and SUTime 
     """
-    def __init__(self):
-        self.tz = pytz.timezone('US/Pacific')
 
     def schedule_tweets(self, screen_name, tweet, tweet_id, talk_time):
         """
         Take tweet and datetime, schedule num of reminder tweets at set intervals 
         """
         # check config table to see if autosend on
-        config_obj = models.AppConfig.objects.latest("id")
-        approved = 1 if config_obj.auto_send else 0
+        approved = db_bot_utils.check_for_auto_send()
 
         tweet_url = "https://twitter.com/{name}/status/{tweet_id}"
         embeded_tweet = tweet_url.format(name=screen_name, tweet_id=tweet_id)
@@ -105,17 +82,19 @@ class BaseStreamBot:
 
         for  mins in range(interval,(num_tweets*interval+1), interval):
             remind_time = talk_time - timedelta(minutes=mins)
-
             message = "Coming up in {} minutes! {}".format(mins, embeded_tweet)
 
+            tweet_obj = {
+                "message": message,
+                "approved": approved,
+                "remind_time": remind_time
+            }
             print("message should be saved!!!")
+            print(tweet_obj)
 
-            # saving the tweet to the OutgoingTweet table triggers celery stuff
-            tweet_obj = models.Tweets(tweet=message, 
-                                approved=approved, scheduled_time=remind_time)
-            tweet_obj.save()
+            # db_bot_utils.save_outgoing_tweet(tweet_obj)
 
-    def convert_to_utc(self, talk_time, tz):
+    def convert_to_utc(self, talk_time):
         """
         Convert the datetime string we get from SUTime to utcnow
         """
@@ -151,7 +130,7 @@ class Streambot(BaseStreamBot):
     def __init__(self):
         self.api = self.setup_auth()
         self.stream_listener = StreamListener(self)
-        # self.tz = pytz.timezone('US/Pacific')
+        self.tz = pytz.timezone('US/Pacific')
 
         jar_files = os.path.join(BASE_DIR, "python-sutime", "jars") 
         self.sutime = SUTime(jars=jar_files, mark_time_ranges=True)
@@ -199,7 +178,7 @@ class Streambot(BaseStreamBot):
             # need to make time from SUTime match time Django is using
             sutime_stuff = time_room["date"][0]
             print("sutime_stuff: {}".format(sutime_stuff))
-            talk_time = self.convert_to_utc(time_room["date"][0], self.tz)
+            talk_time = self.convert_to_utc(time_room["date"][0])
             print("reult from convet to utc: {}".format(talk_time))
 
             test = self.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
