@@ -14,7 +14,7 @@ import pytz
 os.environ["DJANGO_SETTINGS_MODULE"] = "twotebotapi.settings"
 django.setup()
 
-from twotebotapp.bot_utils import db_utils
+from twotebotapp.bot_utils import db_utils, tweet_utils
 import twotebotapp.secrets as s
 from twotebotapp import models
 from twotebotapi.settings import BASE_DIR
@@ -173,35 +173,12 @@ class Streambot(BaseStreamBot):
             test = self.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
             
     def get_time_and_room(self, tweet):
-        """Get time and room number from a tweet
-        Written by Santi @ https://github.com/adavanisanti
+        """Get time and room number from a tweet using SUTime and tweet_utils
         """
-        result = {}
-        result["date"] = []
-        result["room"] = []
- 
-        time_slots = self.sutime.parse(tweet)
-        print("time_slots inside get_time_and_room: {}".format(time_slots))
-        tweet_without_time = tweet
+        extracted_time = self.sutime.parse(tweet)
+        time_and_room = tweet_utils.get_time_and_room(tweet, extracted_time)
+        return time_and_room
 
-        for time_slot in time_slots:
-            tweet_without_time = tweet_without_time.replace(time_slot.get("text"),"")
-            print(tweet_without_time)
-            print("^" * 45)
-            print(result)
-            result["date"].append(time_slot.get("value"))
-        
-        # filter_known_words = [word.lower() for word in word_tokenize(tweet_without_time) if word.lower() not in (self.stopwords + nltk.corpus.words.words())]
-        filter_known_words = [word.lower() for word in word_tokenize(tweet_without_time)]
-
-        # regular expression for room
-        room_re = re.compile("([a-zA-Z](\d{3})[-+]?(\d{3})?)")
-
-        for word in filter_known_words:
-            if room_re.match(word):
-                result["room"].append(room_re.match(word).group())
-
-        return result
 
 
 if __name__ == '__main__':
