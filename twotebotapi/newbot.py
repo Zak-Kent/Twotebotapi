@@ -14,16 +14,14 @@ import pytz
 os.environ["DJANGO_SETTINGS_MODULE"] = "twotebotapi.settings"
 django.setup()
 
-from twotebotapp import db_bot_utils
+from twotebotapp.bot_utils import db_utils
 import twotebotapp.secrets as s
 from twotebotapp import models
 from twotebotapi.settings import BASE_DIR
 
 
 class StreamListener(tweepy.StreamListener):
-    """
-    Object that defines the callback actions passed to tweepy.Stream 
-    """
+    """Object that defines the callback actions passed to tweepy.Stream"""
     def __init__(self, streambot, api=None):
         self.api = api or API()
         # needed ref to streambot so method can be called there
@@ -32,10 +30,8 @@ class StreamListener(tweepy.StreamListener):
         self.ignored_users = [self.tw_bot_id, ]
         
     def update_ignore_users(self):
-        """
-        Check app config table to get list of ignored twitter ids, ignore bot
-        """
-        ignore_list = db_bot_utils.get_ignored_users()
+        """Check app config table to get list of ignored twitter ids"""
+        ignore_list = db_utils.get_ignored_users()
         ignore_list.append(self.tw_bot_id)
         self.ignored_users = ignore_list
 
@@ -48,7 +44,7 @@ class StreamListener(tweepy.StreamListener):
             return
 
         # create or update user and tweet records in Django models
-        db_bot_utils.get_or_create_user_and_tweet(status)
+        db_utils.get_or_create_user_and_tweet(status)
 
         # trigger time parsing with SUTime inside streambot
         self.streambot.retweet_logic(status.text, status.id_str, 
@@ -61,16 +57,13 @@ class StreamListener(tweepy.StreamListener):
 
 
 class BaseStreamBot:
-    """
-    Base class with functionality not related to Tweepy and SUTime 
-    """
+    """Base class with functionality not related to Tweepy and SUTime"""
 
     def schedule_tweets(self, screen_name, tweet, tweet_id, talk_time):
-        """
-        Take tweet and datetime, schedule num of reminder tweets at set intervals 
-        """
+        """Schedule reminder tweets at set intervals"""
+
         # check config table to see if autosend on
-        approved = db_bot_utils.check_for_auto_send()
+        approved = db_utils.check_for_auto_send()
 
         tweet_url = "https://twitter.com/{name}/status/{tweet_id}"
         embeded_tweet = tweet_url.format(name=screen_name, tweet_id=tweet_id)
@@ -92,12 +85,11 @@ class BaseStreamBot:
             print("message should be saved!!!")
             print(tweet_obj)
 
-            # db_bot_utils.save_outgoing_tweet(tweet_obj)
+            # db_utils.save_outgoing_tweet(tweet_obj)
 
     def convert_to_utc(self, talk_time):
-        """
-        Convert the datetime string we get from SUTime to utcnow
-        """
+        """Convert the datetime string we get from SUTime to utcnow"""
+
         # get correct local year, month, dat
         local_date = datetime.now(self.tz)
         local_date_str = datetime.strftime(local_date, "%Y %m %d")
@@ -117,15 +109,14 @@ class BaseStreamBot:
 
 
 class Streambot(BaseStreamBot):
-    """
-    Stream Twitter and look for tweets that contain targeted words, 
+    """Stream Twitter and look for tweets that contain targeted words,
     when tweets found look for datetime and room, if present save tweet to
-    OutgoingTweet model.  
+    OutgoingTweet model.
 
     Ex.
     bot = Streambot()
     # to run a stream looking for tweets about PyCon
-    bot.run_stream(["PyCon"]) 
+    bot.run_stream(["PyCon"])
     """
     def __init__(self):
         self.api = self.setup_auth()
@@ -139,15 +130,14 @@ class Streambot(BaseStreamBot):
         """
         Set up auth stuff for api and return tweepy api object
         """
-        auth = tweepy.OAuthHandler(s.listener["CONSUMER_KEY"], s.listener["CONSUMER_SECRET"])
-        auth.set_access_token(s.listener["ACCESS_TOKEN"], s.listener["ACCESS_TOKEN_SECRET"])
+        auth = tweepy.OAuthHandler(s.sender["CONSUMER_KEY"], s.sender["CONSUMER_SECRET"])
+        auth.set_access_token(s.sender["ACCESS_TOKEN"], s.sender["ACCESS_TOKEN_SECRET"])
         api = tweepy.API(auth)
 
         return api
 
     def run_stream(self, search_list=[]):
-        """
-        Start stream, when matching tweet found on_status in StreamListener called. 
+        """Start stream, when matching tweet found on_status method called. 
         search_list arg is a list of terms that will be looked for in tweets
         """
         if search_list == []:
@@ -157,8 +147,7 @@ class Streambot(BaseStreamBot):
         stream.filter(track=search_list)
 
     def retweet_logic(self, tweet, tweet_id, screen_name):
-        """
-        Use SUTime to try to parse a datetime out of a tweet, if successful
+        """Use SUTime to try to parse a datetime out of a tweet, if successful
         save tweet to OutgoingTweet to be retweeted
         """
         print(tweet, tweet_id)
@@ -184,8 +173,7 @@ class Streambot(BaseStreamBot):
             test = self.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
             
     def get_time_and_room(self, tweet):
-        """
-        Get time and room number from a tweet
+        """Get time and room number from a tweet
         Written by Santi @ https://github.com/adavanisanti
         """
         result = {}
@@ -193,10 +181,14 @@ class Streambot(BaseStreamBot):
         result["room"] = []
  
         time_slots = self.sutime.parse(tweet)
+        print("time_slots inside get_time_and_room: {}".format(time_slots))
         tweet_without_time = tweet
 
         for time_slot in time_slots:
             tweet_without_time = tweet_without_time.replace(time_slot.get("text"),"")
+            print(tweet_without_time)
+            print("^" * 45)
+            print(result)
             result["date"].append(time_slot.get("value"))
         
         # filter_known_words = [word.lower() for word in word_tokenize(tweet_without_time) if word.lower() not in (self.stopwords + nltk.corpus.words.words())]
@@ -216,4 +208,15 @@ if __name__ == '__main__':
     bot = Streambot()
     keyword = "adlsjlflkjdhsfla"
     print(keyword)
-    bot.run_stream([keyword])
+    # bot.run_stream([keyword])
+    result = bot.get_time_and_room("C123 11:40am tomorrow, other text text text")
+
+
+    print(result)
+
+
+
+
+
+
+

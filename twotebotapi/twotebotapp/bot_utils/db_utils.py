@@ -1,4 +1,4 @@
-from . import models
+from twotebotapp import models
 
 def get_ignored_users():
     """
