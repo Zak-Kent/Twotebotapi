@@ -130,11 +130,3 @@ if __name__ == '__main__':
     keyword = "adlsjlflkjdhsfla"
     print(keyword)
     bot.run_stream([keyword])
-    # result = bot.parse_time_room("C123 11:40am tomorrow, other text text text")
-
-
-
-
-
-
-
