@@ -1,6 +1,8 @@
 from nltk import word_tokenize
 import re
 
+from . import db_utils
+
 
 def get_time_and_room(tweet, extracted_time):
     """Get room number from a tweet while ignoring the time that was extracted
@@ -27,3 +29,37 @@ def get_time_and_room(tweet, extracted_time):
             result["room"].append(room_re.match(word).group())
 
     return result
+
+def schedule_tweets(screen_name, tweet, tweet_id, talk_time):
+    """Schedule reminder tweets at set intervals"""
+
+    # check config table to see if autosend on
+    approved = db_utils.check_for_auto_send()
+
+    tweet_url = "https://twitter.com/{name}/status/{tweet_id}"
+    embeded_tweet = tweet_url.format(name=screen_name, tweet_id=tweet_id)
+
+    # set num of reminder tweets and interval in mins that tweets sent
+    # num_tweets = 2 & interval = 15 sends 2 tweets 30 & 15 mins before 
+    num_tweets = 2
+    interval = 1
+
+    for mins in range(interval,(num_tweets*interval+1), interval):
+        remind_time = talk_time - timedelta(minutes=mins)
+        message = "Coming up in {} minutes! {}".format(mins, embeded_tweet)
+
+        tweet_obj = {
+            "message": message,
+            "approved": approved,
+            "remind_time": remind_time
+        }
+        print("message should be saved!!!")
+        print(tweet_obj)
+
+        # db_utils.save_outgoing_tweet(tweet_obj)
+
+
+
+
+
+

@@ -14,7 +14,7 @@ import pytz
 os.environ["DJANGO_SETTINGS_MODULE"] = "twotebotapi.settings"
 django.setup()
 
-from twotebotapp.bot_utils import db_utils, tweet_utils
+from twotebotapp.bot_utils import db_utils, tweet_utils, time_utils
 import twotebotapp.secrets as s
 from twotebotapp import models
 from twotebotapi.settings import BASE_DIR
@@ -108,7 +108,7 @@ class BaseStreamBot:
         return local_as_utc
 
 
-class Streambot(BaseStreamBot):
+class Streambot:
     """Stream Twitter and look for tweets that contain targeted words,
     when tweets found look for datetime and room, if present save tweet to
     OutgoingTweet model.
@@ -151,7 +151,7 @@ class Streambot(BaseStreamBot):
         save tweet to OutgoingTweet to be retweeted
         """
         print(tweet, tweet_id)
-        time_room = self.get_time_and_room(tweet)
+        time_room = self.parse_time_room(tweet)
 
         # check to make sure both time and room extracted and only one val for each
         val_check = [val for val in time_room.values() if len(val) == 1]
@@ -167,12 +167,12 @@ class Streambot(BaseStreamBot):
             # need to make time from SUTime match time Django is using
             sutime_stuff = time_room["date"][0]
             print("sutime_stuff: {}".format(sutime_stuff))
-            talk_time = self.convert_to_utc(time_room["date"][0])
+            talk_time = time_utils.convert_to_utc(time_room["date"][0])
             print("reult from convet to utc: {}".format(talk_time))
 
-            test = self.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
+            test = tweet_utils.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
             
-    def get_time_and_room(self, tweet):
+    def parse_time_room(self, tweet):
         """Get time and room number from a tweet using SUTime and tweet_utils
         """
         extracted_time = self.sutime.parse(tweet)
