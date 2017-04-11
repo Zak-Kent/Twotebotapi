@@ -1,14 +1,10 @@
+import django
+from nltk import word_tokenize
+import os
+import re
+from sutime import SUTime
 import tweepy
 from tweepy.api import API 
-from sutime import SUTime
-from nltk import word_tokenize
-import re
-import os
-from datetime import datetime, timedelta
-from dateutil.parser import parse
-import django
-
-import pytz
 
 # need to point Django at the right settings to access pieces of app
 os.environ["DJANGO_SETTINGS_MODULE"] = "twotebotapi.settings"
@@ -24,10 +20,10 @@ class StreamListener(tweepy.StreamListener):
     """Object that defines the callback actions passed to tweepy.Stream"""
     def __init__(self, streambot, api=None):
         self.api = api or API()
-        # needed ref to streambot so method can be called there
+        # needed ref to streambot so method can be called
         self.streambot = streambot
         self.tw_bot_id = 841013993602863104
-        self.ignored_users = [self.tw_bot_id, ]
+        self.ignored_users = []
         
     def update_ignore_users(self):
         """Check app config table to get list of ignored twitter ids"""
@@ -36,7 +32,8 @@ class StreamListener(tweepy.StreamListener):
         self.ignored_users = ignore_list
 
     def on_status(self, status):
-        # call to check for ignored users from AppConfig
+        """Take a tweet with matching keyword save and trigger retweet_logic"""
+        
         self.update_ignore_users()
 
         if status.user.id in self.ignored_users:
@@ -46,7 +43,7 @@ class StreamListener(tweepy.StreamListener):
         # create or update user and tweet records in Django models
         db_utils.get_or_create_user_and_tweet(status)
 
-        # trigger time parsing with SUTime inside streambot
+        # trigger logic to handle tweet and decide on response in Streambot
         self.streambot.retweet_logic(status.text, status.id_str, 
                                         status.user.screen_name)  
         
@@ -69,15 +66,11 @@ class Streambot:
     def __init__(self):
         self.api = self.setup_auth()
         self.stream_listener = StreamListener(self)
-        self.tz = pytz.timezone('US/Pacific')
-
         jar_files = os.path.join(BASE_DIR, "python-sutime", "jars") 
         self.sutime = SUTime(jars=jar_files, mark_time_ranges=True)
 
     def setup_auth(self):
-        """
-        Set up auth stuff for api and return tweepy api object
-        """
+        """Set up auth stuff for api and return tweepy api object"""
         auth = tweepy.OAuthHandler(s.sender["CONSUMER_KEY"], 
                                    s.sender["CONSUMER_SECRET"])
         auth.set_access_token(s.sender["ACCESS_TOKEN"], 
@@ -105,8 +98,7 @@ class Streambot:
         self.api.update_status(status=mention)
 
     def parse_time_room(self, tweet):
-        """Get time and room number from a tweet using SUTime and tweet_utils
-        """
+        """Get time and room number from a tweet using SUTime and tweet_utils"""
         extracted_time = self.sutime.parse(tweet)
         time_and_room = tweet_utils.get_time_and_room(tweet, extracted_time)
         return time_and_room
@@ -116,30 +108,29 @@ class Streambot:
         save tweet to OutgoingTweet to be retweeted
         """
         print(tweet, tweet_id)
+
+        # use SUTime to parse a datetime out of tweet
         time_room = self.parse_time_room(tweet)
 
         # check to make sure both time and room extracted and only one val for each
         val_check = [val for val in time_room.values() if len(val) == 1]
 
         if len(val_check) == 2:
-            self.send_mention_tweet(screen_name)
+            # self.send_mention_tweet(screen_name)
 
             parsed_date = time_room["date"][0]
             talk_time = time_utils.convert_to_utc(parsed_date)
             print("reult from convet to utc: {}".format(talk_time))
 
-            test = tweet_utils.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
+            tweet_utils.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
 
 
 if __name__ == '__main__':
     bot = Streambot()
     keyword = "adlsjlflkjdhsfla"
     print(keyword)
-    # bot.run_stream([keyword])
-    result = bot.get_time_and_room("C123 11:40am tomorrow, other text text text")
-
-
-    print(result)
+    bot.run_stream([keyword])
+    # result = bot.parse_time_room("C123 11:40am tomorrow, other text text text")
 
 
 
