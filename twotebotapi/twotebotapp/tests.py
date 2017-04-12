@@ -1,15 +1,15 @@
 from django.test import TestCase, Client
+import datetime
 import json
 from freezegun import freeze_time
 
 from .models import Tweets, AppConfig
 from .tasks import beat_tweet_scheduler, tweeter
+from . import db_bot_utils
 
  
 class TestOutBoundTweetsEndpoint(TestCase):
-    """
-    Simple test of endpoint that front end will use to display info about tweets
-    """
+    """Test of endpoint frontend will use to display info about tweets"""
     fixtures = ["test_fixture"] 
     
     def setUp(self):
@@ -43,9 +43,8 @@ class TestOutBoundTweetsEndpoint(TestCase):
 
 
 class TestTweetModelSaveMethod(TestCase):
-    """
-    Test to check that model calcs the scheduled_time field when a tweet 
-    object is approved to be sent. 
+    """Test to check that model calcs the scheduled_time field when a tweet
+    object is approved to be sent.
     """
 
     def setUp(self):
@@ -65,8 +64,7 @@ class TestTweetModelSaveMethod(TestCase):
         self.assertEqual(bool(pending_tweet.scheduled_time), False)
 
     def test_tweet_gets_schedulec_time_when_approved_set_to_true(self):
-        """
-        A tweet object is created and is pending approval, later it is changed
+        """A tweet object is created and is pending approval. Later it is changed
         to approved and has it's scheduled time is calculated when approved. 
         A tweets scheduled time will only be calculated when the model's save
         method is called. 
@@ -82,8 +80,7 @@ class TestTweetModelSaveMethod(TestCase):
 
 
 class TestCeleryTasks(TestCase):
-    """
-    Check that the celery tasks perform as expected in isolation
+    """Check that the celery tasks perform as expected in isolation
 
     The tests below need 'CELERY_ALWAYS_EAGER = True' to be set in 
     the project's settings.py file in order for the tests to run properly
@@ -125,4 +122,11 @@ class TestCeleryTasks(TestCase):
 
     #     sent = Tweets.objects.get(pk=outgoing.id)
     #     self.assertEqual(bool(sent.sent_time), True)
+
+
+
+
+
+
+
 
