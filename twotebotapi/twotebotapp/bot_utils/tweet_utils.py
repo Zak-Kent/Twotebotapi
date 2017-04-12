@@ -55,8 +55,6 @@ def schedule_tweets(u_name, tweet, t_id, talk_time, num_tweets=2, interval=1):
             "approved": approved,
             "remind_time": remind_time
         }
-        print("message should be saved!!!")
-        print(tweet_obj)
 
         db_utils.save_outgoing_tweet(tweet_obj)
 

@@ -1,6 +1,7 @@
 import datetime
 from django.test import TestCase
 from freezegun import freeze_time
+import pytz
 
 from twotebotapp.bot_utils import db_utils, tweet_utils, time_utils
 from twotebotapp.models import Tweets, AppConfig
@@ -84,3 +85,15 @@ class TestTweetUtils(TestCase):
         self.assertEqual(len(tweets_in_db_after), 2)
 
 
+class TestTimeUtils(TestCase):
+    """Tests of the time utils used in bot"""
+
+    @freeze_time("2017-08-05")
+    def test_convert_to_utc_returns_correct_time(self):
+        time_str_from_sutime = "2017-04-11T08:00"
+        converted_time = time_utils.convert_to_utc(time_str_from_sutime)
+
+        utc = pytz.utc
+        expected_output = datetime.datetime(2017, 8, 4, 15, tzinfo=utc) 
+
+        self.assertEqual(converted_time, expected_output)
