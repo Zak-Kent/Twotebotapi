@@ -100,7 +100,9 @@ class Streambot:
     def parse_time_room(self, tweet):
         """Get time and room number from a tweet using SUTime and tweet_utils"""
         extracted_time = self.sutime.parse(tweet)
+        print(extracted_time)
         time_and_room = tweet_utils.get_time_and_room(tweet, extracted_time)
+        print(time_and_room)
         return time_and_room
 
     def retweet_logic(self, tweet, tweet_id, screen_name):
@@ -129,4 +131,5 @@ if __name__ == '__main__':
     bot = Streambot()
     keyword = "adlsjlflkjdhsfla"
     print(keyword)
-    bot.run_stream([keyword])
+    # bot.run_stream([keyword])
+    bot.parse_time_room("a test tweet R123 2:05pm")

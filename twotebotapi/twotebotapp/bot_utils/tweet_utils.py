@@ -31,19 +31,20 @@ def get_time_and_room(tweet, extracted_time):
 
     return result
 
-def schedule_tweets(screen_name, tweet, tweet_id, talk_time):
-    """Schedule reminder tweets at set intervals"""
+def schedule_tweets(u_name, tweet, t_id, talk_time, num_tweets=2, interval=1):
+    """Schedule reminder tweets at set intervals. num_tweets controls
+    the number of remindertweets sent and interval controls the minutes
+    before the event the tweets are sent. 
 
+    Ex. 
+    num_tweets = 2 & interval = 15 
+    will send 2 tweets 30 & 15 mins before event
+    """
     # check config table to see if autosend on
     approved = db_utils.check_for_auto_send()
 
     tweet_url = "https://twitter.com/{name}/status/{tweet_id}"
-    embeded_tweet = tweet_url.format(name=screen_name, tweet_id=tweet_id)
-
-    # set num of reminder tweets and interval in mins that tweets sent
-    # num_tweets = 2 & interval = 15 sends 2 tweets 30 & 15 mins before 
-    num_tweets = 2
-    interval = 1
+    embeded_tweet = tweet_url.format(name=u_name, tweet_id=t_id)
 
     for mins in range(interval,(num_tweets*interval+1), interval):
         remind_time = talk_time - timedelta(minutes=mins)
@@ -57,7 +58,7 @@ def schedule_tweets(screen_name, tweet, tweet_id, talk_time):
         print("message should be saved!!!")
         print(tweet_obj)
 
-        # db_utils.save_outgoing_tweet(tweet_obj)
+        db_utils.save_outgoing_tweet(tweet_obj)
 
 
 
