@@ -100,17 +100,13 @@ class Streambot:
     def parse_time_room(self, tweet):
         """Get time and room number from a tweet using SUTime and tweet_utils"""
         extracted_time = self.sutime.parse(tweet)
-        print(extracted_time)
         time_and_room = tweet_utils.get_time_and_room(tweet, extracted_time)
-        print(time_and_room)
         return time_and_room
 
     def retweet_logic(self, tweet, tweet_id, screen_name):
         """Use SUTime to try to parse a datetime out of a tweet, if successful
         save tweet to OutgoingTweet to be retweeted
         """
-        print(tweet, tweet_id)
-
         # use SUTime to parse a datetime out of tweet
         time_room = self.parse_time_room(tweet)
 
@@ -122,7 +118,6 @@ class Streambot:
 
             parsed_date = time_room["date"][0]
             talk_time = time_utils.convert_to_utc(parsed_date)
-            print("reult from convet to utc: {}".format(talk_time))
 
             tweet_utils.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
 
@@ -131,5 +126,5 @@ if __name__ == '__main__':
     bot = Streambot()
     keyword = "adlsjlflkjdhsfla"
     print(keyword)
-    # bot.run_stream([keyword])
-    bot.parse_time_room("a test tweet R123 2:05pm")
+    bot.run_stream([keyword])
+    
