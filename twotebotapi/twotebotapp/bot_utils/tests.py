@@ -4,7 +4,7 @@ from freezegun import freeze_time
 import pytz
 
 from twotebotapp.bot_utils import db_utils, tweet_utils, time_utils
-from twotebotapp.models import Tweets, AppConfig
+from twotebotapp.models import Tweets, AppConfig, User, Event
 
 
 class TestDBUtils(TestCase):
@@ -12,7 +12,8 @@ class TestDBUtils(TestCase):
 
     def setUp(self):
         AppConfig.objects.create(auto_send=True, 
-                                default_send_interval=1, ignore_users=[12345,])
+                                default_send_interval=1, 
+                                ignore_users=[12345,])
 
     def test_get_ignored_users_returns_correct_list(self):
         ignore_list = db_utils.get_ignored_users()
@@ -40,6 +41,34 @@ class TestDBUtils(TestCase):
 
     # def test_get_or_create_user_and_tweet_saves_correctly(self):
     #     pass
+
+    @freeze_time("2017-08-05")
+    def test_event_conflict_check_works_correctly(self):
+        """Check that conflict check returns correct T/F based on matches"""
+
+        time_delt = datetime.timedelta(1)
+        fake_now = datetime.datetime.now()
+        fake_user = User.objects.create(id_str=12345)
+        fake_loc = "B123"
+
+        Event.objects.create(
+                            description="a fake description",
+                            start=fake_now, 
+                            location=fake_loc,
+                            creator=fake_user
+                            )
+
+        diff_time = db_utils.check_time_room_conflict(fake_now - time_delt, fake_loc)
+        self.assertFalse(diff_time)
+
+        diff_room = db_utils.check_time_room_conflict(fake_now, "Z123")
+        self.assertFalse(diff_room)
+
+        match = db_utils.check_time_room_conflict(fake_now, fake_loc)
+        self.assertTrue(match)
+
+
+
 
 
 class TestTweetUtils(TestCase):

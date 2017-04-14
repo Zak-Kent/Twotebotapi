@@ -12,7 +12,6 @@ django.setup()
 
 from twotebotapp.bot_utils import db_utils, tweet_utils, time_utils
 import twotebotapp.secrets as s
-from twotebotapp import models
 from twotebotapi.settings import BASE_DIR
 
 
@@ -71,10 +70,10 @@ class Streambot:
 
     def setup_auth(self):
         """Set up auth stuff for api and return tweepy api object"""
-        auth = tweepy.OAuthHandler(s.sender["CONSUMER_KEY"], 
-                                   s.sender["CONSUMER_SECRET"])
-        auth.set_access_token(s.sender["ACCESS_TOKEN"], 
-                              s.sender["ACCESS_TOKEN_SECRET"])
+        auth = tweepy.OAuthHandler(s.listener["CONSUMER_KEY"], 
+                                   s.listener["CONSUMER_SECRET"])
+        auth.set_access_token(s.listener["ACCESS_TOKEN"], 
+                              s.listener["ACCESS_TOKEN_SECRET"])
 
         api = tweepy.API(auth)
         return api
@@ -110,11 +109,11 @@ class Streambot:
         # use SUTime to parse a datetime out of tweet
         time_room = self.parse_time_room(tweet)
 
-        # check to make sure both time and room extracted and only one val for each
+        # make sure both time and room extracted and only one val each
         val_check = [val for val in time_room.values() if len(val) == 1]
 
         if len(val_check) == 2:
-            # self.send_mention_tweet(screen_name)
+            self.send_mention_tweet(screen_name)
 
             parsed_date = time_room["date"][0]
             talk_time = time_utils.convert_to_utc(parsed_date)

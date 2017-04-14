@@ -52,6 +52,13 @@ def save_outgoing_tweet(tweet_obj):
                             scheduled_time=tweet_obj["remind_time"])
     tweet_obj.save()
 
+def check_time_room_conflict(a_time, a_room):
+    """
+    Check to see if there is a time and room conflict
+    """
+    event_conflict = models.Event.objects.filter(location=a_room, start=a_time)
+    return True if event_conflict else False
+
 
 
 

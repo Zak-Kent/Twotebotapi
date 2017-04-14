@@ -77,4 +77,45 @@ class User(models.Model):
     friends_count = models.IntegerField(blank=True, null=True)
     favourites_count = models.IntegerField(default=-1, null=True)
 
+
+# ------------------------------------------------------------------------
+# model written by Riley @ https://github.com/rileyrustad
+
+class Event(models.Model):
+    """This model represents an one-time event"""
+
+    #title = models.CharField(max_length=255)
+    description = models.TextField()
+    start = models.DateTimeField()
+
+    # **** won't have access to end time 
+    # end = models.DateTimeField(
+    #     blank=True,
+    #     # validators=[validate_after]
+    # )
+
+    #TODO in view, make logic that end time must be later than start time.
+    location = models.CharField(max_length=100)
+    creator = models.ForeignKey('User', null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    # ***** don't check if end time is after start, can only access start time
+    # def save(self, *args, **kwargs):
+    #     if not self.end:
+    #         self.end = self.start + timezone.timedelta(hours=1)
+    #     super(Event, self).save(*args, **kwargs)
+    #     if self.end - self.start < timezone.timedelta(0):
+    #         raise ValidationError('end time must occur after start time, is now occuring {} before'.format(self.end - self.start))
+
+    def __str__(self):
+        return self.description
+
+
+
+
+
+
+
+
     
