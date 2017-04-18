@@ -69,8 +69,23 @@ class TestDBUtils(TestCase):
         match = db_utils.check_time_room_conflict(fake_now, fake_loc)
         self.assertTrue(match)
 
+    @freeze_time("2017-08-05")
+    def test_update_time_and_room_utils_works(self):
+        time_room_obj = {}
 
+        time_room_obj["start"] = datetime.datetime.now()
+        time_room_obj["creator"] = User.objects.create(id_str=12345)
+        time_room_obj["location"] = "B123"
+        time_room_obj["description"] = "a fake tweet used in description field"
 
+        no_records = Event.objects.all()
+        self.assertEqual(len(no_records), 0)
+
+        # make call to utils func to create a db record
+        db_utils.update_time_and_room(time_room_obj)
+
+        should_be_one = Event.objects.all()
+        self.assertEqual(len(should_be_one), 1)
 
 
 class TestTweetUtils(TestCase):
