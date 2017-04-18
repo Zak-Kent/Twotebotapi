@@ -40,9 +40,6 @@ class TestDBUtils(TestCase):
         tweets_after_save = Tweets.objects.all()
         self.assertEqual(len(tweets_after_save), 1)
 
-    def test_get_or_create_user_and_tweet_saves_correctly(self):
-        # need to create a fake tweet object that mirrors twitter output
-        pass
 
     @freeze_time("2017-08-05")
     def test_event_conflict_check_works_correctly(self):
