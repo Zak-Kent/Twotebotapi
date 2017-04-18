@@ -96,7 +96,7 @@ class Event(models.Model):
 
     #TODO in view, make logic that end time must be later than start time.
     location = models.CharField(max_length=100)
-    creator = models.ForeignKey('User', null=True)
+    creator = models.CharField(max_length=100, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 

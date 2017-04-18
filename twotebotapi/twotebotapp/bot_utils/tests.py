@@ -40,7 +40,6 @@ class TestDBUtils(TestCase):
         tweets_after_save = Tweets.objects.all()
         self.assertEqual(len(tweets_after_save), 1)
 
-
     @freeze_time("2017-08-05")
     def test_event_conflict_check_works_correctly(self):
         """Check that conflict check returns correct T/F based on matches"""
@@ -68,18 +67,16 @@ class TestDBUtils(TestCase):
 
     @freeze_time("2017-08-05")
     def test_update_time_and_room_utils_works(self):
-        time_room_obj = {}
-
-        time_room_obj["start"] = datetime.datetime.now()
-        time_room_obj["creator"] = User.objects.create(id_str=12345)
-        time_room_obj["location"] = "B123"
-        time_room_obj["description"] = "a fake tweet used in description field"
-
         no_records = Event.objects.all()
         self.assertEqual(len(no_records), 0)
 
         # make call to utils func to create a db record
-        db_utils.update_time_and_room(time_room_obj)
+        db_utils.create_event(
+                              start=datetime.datetime.now(),
+                              creator="fakeusername",
+                              location="B123",
+                              description="a fake tweet used in description"
+                             )
 
         should_be_one = Event.objects.all()
         self.assertEqual(len(should_be_one), 1)

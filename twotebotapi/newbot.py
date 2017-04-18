@@ -113,12 +113,27 @@ class Streambot:
         val_check = [val for val in time_room.values() if len(val) == 1]
 
         if len(val_check) == 2:
-            self.send_mention_tweet(screen_name)
-
+            talk_room = time_room["room"][0]
             parsed_date = time_room["date"][0]
             talk_time = time_utils.convert_to_utc(parsed_date)
 
-            tweet_utils.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
+
+            # check for a time and room conflict, only one set of retweets per event
+            conflict = db_utils.check_time_room_conflict(talk_time, talk_room)
+
+            if not conflict:
+                self.send_mention_tweet(screen_name)
+
+                # This record lets us check that retweets not for same event
+                db_utils.create_event(
+                                      description=tweet,
+                                      start=talk_time, 
+                                      location=talk_room,
+                                      creator=screen_name
+                                     )
+
+                # schedules reminder tweets to be sent out before event
+                tweet_utils.schedule_tweets(screen_name, tweet, tweet_id, talk_time)
 
 
 if __name__ == '__main__':
