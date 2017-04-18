@@ -1,3 +1,4 @@
+import datetime
 import django
 from nltk import word_tokenize
 import os
@@ -93,7 +94,8 @@ class Streambot:
         their tweet has been recieved and that we will send out reminders
         about thier event.
         """
-        mention = "@{} We saw your openspaces tweet!".format(screen_name)
+        time = datetime.datetime.now()
+        mention = "@{} We saw your openspaces tweet! {}".format(screen_name, time)
         self.api.update_status(status=mention)
 
     def parse_time_room(self, tweet):
@@ -114,8 +116,8 @@ class Streambot:
 
         if len(val_check) == 2:
             talk_room = time_room["room"][0]
-            parsed_date = time_room["date"][0]
-            talk_time = time_utils.convert_to_utc(parsed_date)
+            parsed_time = time_room["date"][0]
+            talk_time = time_utils.convert_to_utc(parsed_time)
 
 
             # check for a time and room conflict, only one set of retweets per event

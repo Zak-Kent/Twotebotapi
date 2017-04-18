@@ -59,8 +59,8 @@ def check_time_room_conflict(a_time, a_room):
     event_conflict = models.Event.objects.filter(location=a_room, start=a_time)
     return True if event_conflict else False
 
-def create_event(time_room_obj):
+def create_event(**kwargs):
     """
     Create event record with a description, creator, time, and room
     """
-    models.Event.objects.create(**time_room_obj)
+    models.Event.objects.create(**kwargs)
