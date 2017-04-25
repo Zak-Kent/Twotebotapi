@@ -3,9 +3,12 @@ import datetime
 import json
 from freezegun import freeze_time
 
-from .models import Tweets, AppConfig
-from .tasks import beat_tweet_scheduler, tweeter
 from . import bot_utils
+from .models import Tweets, AppConfig
+
+# commented out so travis doesn't look for twitter secrets
+# imports needed for celery test, see last test class for setup details
+#from .tasks import beat_tweet_scheduler, tweeter
 
  
 class TestOutBoundTweetsEndpoint(TestCase):
