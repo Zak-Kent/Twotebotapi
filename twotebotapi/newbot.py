@@ -119,7 +119,6 @@ class Streambot:
             parsed_time = time_room["date"][0]
             talk_time = time_utils.convert_to_utc(parsed_time)
 
-
             # check for a time and room conflict, only one set of retweets per event
             conflict = db_utils.check_time_room_conflict(talk_time, talk_room)
 
