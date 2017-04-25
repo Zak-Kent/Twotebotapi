@@ -1,9 +1,13 @@
 language: python
 python:
 - '3.5'
+
 install:
 - pip install -r requirements.txt
+- echo "import nltk; nltk.download('punkt')" | python twotebotapi/manage.py shell
+
 script: python twotebotapi/manage.py test twotebotapi/twotebotapp/bot_utils/
+
 before_install:
 - openssl aes-256-cbc -K $encrypted_de9c68a33182_key -iv $encrypted_de9c68a33182_iv
   -in project_config.py.enc -out twotebotapi/twotebotapi/project_config.py -d
