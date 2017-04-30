@@ -3,6 +3,7 @@ import django
 from nltk import word_tokenize
 import os
 import re
+from slacker import Slacker
 from sutime import SUTime
 import tweepy
 from tweepy.api import API 
@@ -45,7 +46,7 @@ class StreamListener(tweepy.StreamListener):
 
         # trigger logic to handle tweet and decide on response in Streambot
         self.streambot.retweet_logic(status.text, status.id_str, 
-                                        status.user.screen_name)  
+                                    status.user.screen_name, status.user.id)  
         
     def on_error(self, status_code):
         if status_code == 420:
@@ -68,6 +69,7 @@ class Streambot:
         self.stream_listener = StreamListener(self)
         jar_files = os.path.join(BASE_DIR, "python-sutime", "jars") 
         self.sutime = SUTime(jars=jar_files, mark_time_ranges=True)
+        self.slacker = Slacker(s.SLACK_TOKEN)
 
     def setup_auth(self):
         """Set up auth stuff for api and return tweepy api object"""
@@ -104,7 +106,7 @@ class Streambot:
         time_and_room = tweet_utils.get_time_and_room(tweet, extracted_time)
         return time_and_room
 
-    def retweet_logic(self, tweet, tweet_id, screen_name):
+    def retweet_logic(self, tweet, tweet_id, screen_name, user_id):
         """Use SUTime to try to parse a datetime out of a tweet, if successful
         save tweet to OutgoingTweet to be retweeted
         """
@@ -123,6 +125,10 @@ class Streambot:
             conflict = db_utils.check_time_room_conflict(talk_time, talk_room)
 
             if not conflict:
+                # send message to slack when a tweet is scheduled to go out
+                slack_message = "{} From: {}, id: {}".format(tweet, screen_name, user_id)
+                self.slacker.chat.post_message('#outgoing_tweets', slack_message)
+                
                 self.send_mention_tweet(screen_name)
 
                 # This record lets us check that retweets not for same event
